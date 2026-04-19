@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blob Store Admin</title>
+    <style>
+        :root {
+            --bg: #f4f0e8;
+            --panel: #fffdf8;
+            --ink: #1f2933;
+            --muted: #6b7280;
+            --line: #d7c9b8;
+            --accent: #bd6f38;
+            --accent-dark: #7f3b08;
+            --ok: #25643d;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--ink);
+            background:
+                    radial-gradient(circle at top left, rgba(189, 111, 56, 0.18), transparent 28%),
+                    linear-gradient(180deg, #f8f3ec 0%, var(--bg) 100%);
+        }
+        .layout {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 48px;
+        }
+        .hero {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 20px;
+        }
+        .tab-shell {
+            display: grid;
+            gap: 18px;
+        }
+        .tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 253, 248, 0.72);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 32px rgba(68, 43, 24, 0.06);
+        }
+        .tab-button {
+            border: 1px solid transparent;
+            border-radius: 999px;
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--muted);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+        .tab-button:hover {
+            border-color: rgba(189, 111, 56, 0.25);
+            color: var(--accent-dark);
+        }
+        .tab-button.is-active {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            box-shadow: 0 10px 20px rgba(127, 59, 8, 0.22);
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.is-active {
+            display: block;
+        }
+        .panel {
+            background: color-mix(in srgb, var(--panel) 92%, white);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 12px 32px rgba(68, 43, 24, 0.08);
+        }
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.3rem;
+        }
+        .hint {
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+        .success {
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(37, 100, 61, 0.1);
+            border: 1px solid rgba(37, 100, 61, 0.18);
+            color: var(--ok);
+            margin-bottom: 16px;
+        }
+        .warning {
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(180, 83, 9, 0.1);
+            border: 1px solid rgba(180, 83, 9, 0.18);
+            color: #9a3412;
+            margin-bottom: 16px;
+        }
+        .warning strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+        form {
+            display: grid;
+            gap: 16px;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #fff;
+            font: inherit;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .checkbox {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-weight: 600;
+        }
+        .checkbox input {
+            width: auto;
+        }
+        button {
+            width: fit-content;
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .error {
+            color: #b42318;
+            font-size: 0.84rem;
+        }
+        .conditional-group[hidden] {
+            display: none !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(215, 201, 184, 0.8);
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted);
+            font-weight: 700;
+        }
+        .pill {
+            display: inline-flex;
+            border-radius: 999px;
+            padding: 4px 10px;
+            background: rgba(189, 111, 56, 0.12);
+            color: var(--accent-dark);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .mono {
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .link {
+            color: var(--accent-dark);
+            text-decoration: none;
+        }
+        .api-note {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(189, 111, 56, 0.08);
+            color: var(--ink);
+            font-size: 0.9rem;
+        }
+        .api-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .copy-curl-button {
+            padding: 8px 14px;
+            border: 1px solid rgba(127, 59, 8, 0.18);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--accent-dark);
+            box-shadow: none;
+        }
+        .copy-curl-button-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .copy-curl-icon {
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        .copy-curl-button.is-copied {
+            border-color: rgba(37, 100, 61, 0.28);
+            color: var(--ok);
+        }
+        .status-list {
+            display: grid;
+            gap: 12px;
+            margin: 0;
+        }
+        .database-shell {
+            display: grid;
+            gap: 20px;
+        }
+        .database-overview {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+        .database-intro {
+            display: grid;
+            gap: 12px;
+            padding: 22px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 22px;
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.16), transparent 32%),
+                    linear-gradient(135deg, rgba(255, 249, 242, 0.96), rgba(255, 255, 255, 0.78));
+        }
+        .database-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(127, 59, 8, 0.08);
+            color: var(--accent-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .database-title-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .database-title-row h2 {
+            margin: 0;
+            font-size: clamp(1.5rem, 2vw, 2rem);
+        }
+        .database-intro .hint {
+            margin: 0;
+            max-width: 60ch;
+            font-size: 0.96rem;
+        }
+        .database-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .database-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            color: var(--ink);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+        .database-badge.is-live {
+            background: rgba(37, 100, 61, 0.1);
+            border-color: rgba(37, 100, 61, 0.2);
+            color: var(--ok);
+        }
+        .database-status-card {
+            display: grid;
+            gap: 14px;
+            padding: 22px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+        .database-status-header {
+            display: grid;
+            gap: 8px;
+        }
+        .database-status-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .database-status-card strong {
+            font-size: 1.12rem;
+        }
+        .database-url {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(31, 41, 51, 0.05);
+            border: 1px solid rgba(31, 41, 51, 0.08);
+            color: var(--ink);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .database-actions {
+            margin-top: 2px;
+        }
+        .database-form-shell {
+            display: grid;
+            gap: 16px;
+            padding: 20px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.64);
+        }
+        .database-form-header {
+            display: grid;
+            gap: 6px;
+        }
+        .database-form-header h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .database-form-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .form-disclosure {
+            display: grid;
+            gap: 14px;
+            padding: 16px 18px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.62);
+        }
+        .form-disclosure summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            list-style: none;
+        }
+        .form-disclosure summary::-webkit-details-marker {
+            display: none;
+        }
+        .form-disclosure summary::after {
+            content: "+";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            background: rgba(127, 59, 8, 0.08);
+            color: var(--accent-dark);
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .form-disclosure[open] summary::after {
+            content: "-";
+        }
+        .form-disclosure-body {
+            display: grid;
+            gap: 14px;
+        }
+        .form-disclosure-copy {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        .log-console {
+            display: grid;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(31, 41, 51, 0.08);
+            background:
+                    radial-gradient(circle at top right, rgba(14, 116, 144, 0.14), transparent 26%),
+                    linear-gradient(180deg, #18212b 0%, #111827 100%);
+            color: #e5eef7;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .log-console-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .log-console-header p {
+            margin: 0;
+            color: rgba(229, 238, 247, 0.72);
+            font-size: 0.9rem;
+        }
+        .log-console-header .pill {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f8fafc;
+        }
+        .log-list {
+            display: grid;
+            gap: 10px;
+            max-height: 620px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+        .log-entry {
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .log-entry-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .log-level {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .log-level-INFO {
+            background: rgba(37, 99, 235, 0.16);
+            color: #bfdbfe;
+        }
+        .log-level-WARN {
+            background: rgba(245, 158, 11, 0.18);
+            color: #fde68a;
+        }
+        .log-level-ERROR {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fecaca;
+        }
+        .log-level-DEBUG,
+        .log-level-TRACE {
+            background: rgba(148, 163, 184, 0.16);
+            color: #cbd5e1;
+        }
+        .log-timestamp,
+        .log-logger {
+            color: rgba(229, 238, 247, 0.72);
+            font-size: 0.84rem;
+        }
+        .log-message {
+            margin: 0;
+            color: #f8fafc;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .log-empty {
+            padding: 18px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(229, 238, 247, 0.72);
+        }
+        .settings-block {
+            display: grid;
+            gap: 16px;
+            padding: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.55);
+        }
+        .settings-form-shell {
+            display: grid;
+            gap: 16px;
+        }
+        .settings-block h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .settings-header {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+        .media-settings-layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+        .media-settings-sidebar,
+        .media-settings-main {
+            display: grid;
+            gap: 14px;
+        }
+        .media-module-card,
+        .media-scope-card,
+        .media-selector-card,
+        .media-custom-card {
+            padding: 16px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.82);
+        }
+        .media-module-card {
+            gap: 10px;
+        }
+        .media-scope-card {
+            display: grid;
+            gap: 12px;
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.14), transparent 34%),
+                    rgba(255, 250, 244, 0.95);
+        }
+        .media-scope-card strong {
+            font-size: 1rem;
+        }
+        .media-scope-eyebrow {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-dark);
+        }
+        .media-scope-copy {
+            display: grid;
+            gap: 6px;
+        }
+        .media-scope-description {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .media-scope-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .media-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(189, 111, 56, 0.1);
+            color: var(--accent-dark);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .media-selector-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+            gap: 14px;
+            align-items: start;
+        }
+        .media-selector-card,
+        .media-custom-card {
+            display: grid;
+            gap: 12px;
+        }
+        .media-selector-header,
+        .media-custom-header {
+            display: grid;
+            gap: 4px;
+        }
+        .media-selector-header p,
+        .media-custom-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+        .media-type-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .media-type-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-content: start;
+        }
+        .media-type-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid rgba(127, 59, 8, 0.16);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            box-shadow: inset 0 0 0 1px transparent;
+            transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+        .media-type-chip:hover {
+            transform: translateY(-1px);
+            border-color: rgba(127, 59, 8, 0.28);
+        }
+        .media-type-chip:has(input:checked) {
+            border-color: rgba(127, 59, 8, 0.34);
+            background: linear-gradient(135deg, rgba(189, 111, 56, 0.16), rgba(127, 59, 8, 0.08));
+            box-shadow: inset 0 0 0 1px rgba(127, 59, 8, 0.08);
+        }
+        .media-type-chip[data-module-media-group="image"] {
+            background: rgba(245, 158, 11, 0.08);
+        }
+        .media-type-chip[data-module-media-group="video"] {
+            background: rgba(14, 116, 144, 0.08);
+        }
+        .media-type-chip[data-module-media-group="application"] {
+            background: rgba(37, 99, 235, 0.07);
+        }
+        .media-type-chip[data-module-media-group="text"] {
+            background: rgba(22, 163, 74, 0.07);
+        }
+        .media-type-chip input {
+            width: auto;
+            margin: 0;
+        }
+        .media-type-chip[hidden] {
+            display: none;
+        }
+        .media-type-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .media-toolbar-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(31, 41, 51, 0.06);
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .media-custom-card textarea {
+            min-height: 168px;
+            background: rgba(255, 255, 255, 0.94);
+        }
+        .field-title {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+        .status-list div {
+            display: grid;
+            gap: 4px;
+        }
+        .panel-stack {
+            display: grid;
+            gap: 20px;
+        }
+        .table-scroll {
+            overflow-x: auto;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .button-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 12px 18px;
+            border: 1px solid rgba(127, 59, 8, 0.18);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--accent-dark);
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .button-danger {
+            background: linear-gradient(135deg, #b45309 0%, #7c2d12 100%);
+        }
+        .inline-form {
+            display: inline;
+        }
+        .danger-zone {
+            display: grid;
+            gap: 14px;
+            margin-top: 20px;
+            padding: 18px;
+            border: 1px solid rgba(180, 83, 9, 0.2);
+            border-radius: 18px;
+            background: rgba(180, 83, 9, 0.06);
+        }
+        .is-hidden {
+            display: none !important;
+        }
+        @media (max-width: 900px) {
+            .grid, .row {
+                grid-template-columns: 1fr;
+            }
+            .database-overview {
+                grid-template-columns: 1fr;
+            }
+            .media-settings-layout,
+            .media-selector-grid {
+                grid-template-columns: 1fr;
+            }
+            .tab-bar {
+                gap: 8px;
+            }
+            .tab-button {
+                flex: 1 1 calc(50% - 8px);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="layout">
+    <section class="hero">
+        <h1>Blob Store Control Room</h1>
+        <p>Create upload modules for generic files, images, or videos. Configure the backing database from the admin UI, then manage uploads and generated image variants from the same dashboard.</p>
+    </section>
+
+    <section class="tab-shell">
+        <nav class="tab-bar" aria-label="Dashboard sections">
+            <button type="button" class="tab-button is-active" data-tab-target="database">Database</button>
+            <button type="button" class="tab-button" data-tab-target="modules" th:if="${databaseStatus.databaseReady}">Modules</button>
+            <button type="button" class="tab-button" data-tab-target="settings">Settings</button>
+            <button type="button" class="tab-button" data-tab-target="uploads" th:if="${databaseStatus.databaseReady}">Uploads</button>
+            <button type="button" class="tab-button" data-tab-target="api" th:if="${databaseStatus.databaseReady}">API Documentation</button>
+            <button type="button" class="tab-button" data-tab-target="logs">Logs</button>
+        </nav>
+
+        <section class="tab-panel is-active" data-tab-panel="database">
+            <div class="panel">
+                <div class="database-shell">
+                    <div class="database-overview">
+                        <div class="database-intro">
+                            <span class="database-kicker">Database Control</span>
+                            <div class="database-title-row">
+                                <h2>Database Connection</h2>
+                                <span class="database-badge is-live" th:text="${databaseStatus.databaseReady} ? 'Ready' : 'Setup required'"></span>
+                            </div>
+                            <p class="hint">Configure the metadata database here. Supported vendors are PostgreSQL, SQL Server, MySQL, and Oracle.</p>
+                            <div class="database-badges">
+                                <span class="database-badge" th:text="${databaseStatus.savedConnectionConfigured} ? 'Saved configuration' : 'Unsaved session'"></span>
+                                <span class="database-badge" th:text="'Vendor: ' + ${databaseStatus.vendor}"></span>
+                            </div>
+                        </div>
+                        <div class="database-status-card">
+                            <div class="database-status-header">
+                                <span class="database-status-label" th:text="${databaseStatus.savedConnectionConfigured} ? 'Active Database' : 'Current Database'"></span>
+                                <strong th:text="${databaseStatus.vendor}"></strong>
+                            </div>
+                            <div class="database-url mono" th:text="${databaseStatus.jdbcUrl}"></div>
+                            <div class="actions database-actions" th:if="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady}">
+                                <button type="button" id="showDatabaseFormButton">Edit Database Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${databaseSuccessMessage}" class="success" th:text="${databaseSuccessMessage}"></div>
+                    <div th:if="${databaseErrorMessage}" class="warning">
+                        <strong th:text="${databaseErrorMessage}"></strong>
+                        <span th:if="${databaseErrorDetail}" th:text="${databaseErrorDetail}"></span>
+                    </div>
+                    <div th:if="${databaseStatus.startupMessage != null and databaseErrorMessage == null}" class="warning">
+                        <strong>Not able to connect to this database.</strong>
+                        <span th:text="${databaseStatus.startupMessage}"></span>
+                    </div>
+                    <form
+                            th:object="${databaseForm}"
+                            id="databaseFormPanel"
+                            class="database-form-shell"
+                            th:classappend="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady and !databaseFormOpen} ? ' is-hidden' : ''">
+                        <div class="database-form-header">
+                            <h3>Connection Settings</h3>
+                            <p>Test checks the credentials immediately. Save persists the configuration and applies it after the next restart.</p>
+                        </div>
+                        <div class="row">
+                            <label>
+                                Vendor
+                                <select th:field="*{vendor}" id="databaseVendor">
+                                    <option value="">Select database</option>
+                                    <option th:each="vendor : ${databaseVendors}" th:value="${vendor}" th:text="${vendor.displayName()}"></option>
+                                </select>
+                                <span class="error" th:if="${#fields.hasErrors('vendor')}" th:errors="*{vendor}"></span>
+                            </label>
+                            <label>
+                                Host
+                                <input type="text" th:field="*{host}" placeholder="Host">
+                                <span class="error" th:if="${#fields.hasErrors('host')}" th:errors="*{host}"></span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>
+                                Port
+                                <input type="number" min="1" th:field="*{port}" id="databasePort">
+                                <span class="error" th:if="${#fields.hasErrors('port')}" th:errors="*{port}"></span>
+                            </label>
+                            <label>
+                                Database / Service Name
+                                <input type="text" th:field="*{databaseName}" placeholder="Database / Service Name">
+                                <span class="error" th:if="${#fields.hasErrors('databaseName')}" th:errors="*{databaseName}"></span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>
+                                Schema
+                                <input type="text" th:field="*{schema}" placeholder="Schema">
+                                <span class="error" th:if="${#fields.hasErrors('schema')}" th:errors="*{schema}"></span>
+                            </label>
+                            <label>
+                                Username
+                                <input type="text" th:field="*{username}" placeholder="Username">
+                                <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label style="grid-column: 1 / -1;">
+                                Password
+                                <input type="password" th:field="*{password}" placeholder="Password">
+                                <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+                            </label>
+                        </div>
+                        <div class="api-note">
+                            Use Test Connection before saving if you are switching vendors, ports, or credentials.
+                        </div>
+                        <div class="row">
+                            <button type="submit" formaction="/admin/database/test" formmethod="post">Test Connection</button>
+                            <button type="submit" formaction="/admin/database" formmethod="post">Save Database Settings</button>
+                            <button
+                                    type="button"
+                                    class="button-secondary"
+                                    id="cancelDatabaseFormButton"
+                                    th:if="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady}">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="logs">
+            <div class="panel">
+                <h2>System Logs</h2>
+                <p class="hint">Recent application events captured in memory for quick troubleshooting from the admin dashboard.</p>
+                <div class="log-console">
+                    <div class="log-console-header">
+                        <p>Newest entries appear first. The dashboard keeps a rolling in-memory buffer of recent events.</p>
+                        <span class="pill" th:text="'Entries: ' + ${systemLogs.size()}"></span>
+                    </div>
+                    <div class="log-list" th:if="${!systemLogs.isEmpty()}">
+                        <article class="log-entry" th:each="entry : ${systemLogs}">
+                            <div class="log-entry-top">
+                                <span class="log-level" th:classappend="' log-level-' + ${entry.level}" th:text="${entry.level}"></span>
+                                <span class="log-timestamp mono" th:text="${entry.timestamp}"></span>
+                                <span class="log-logger mono" th:text="${entry.logger}"></span>
+                            </div>
+                            <p class="log-message mono" th:text="${entry.message}"></p>
+                        </article>
+                    </div>
+                    <div class="log-empty" th:if="${systemLogs.isEmpty()}">
+                        No log entries captured yet.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="modules" th:if="${databaseStatus.databaseReady}">
+            <div class="panel-stack">
+                <section class="panel">
+                    <h2 th:text="${moduleForm.id} != null ? 'Edit Module' : 'Create Module'"></h2>
+                    <p class="hint" th:if="${moduleForm.id} == null">Use a short, stable module code. The service creates a matching storage folder automatically.</p>
+                    <p class="hint" th:if="${moduleForm.id} != null">Editing keeps the current module code and type. New image sizes are generated from originals and removed sizes have their folders deleted.</p>
+                    <div th:if="${successMessage}" class="success" th:text="${successMessage}"></div>
+                    <form th:action="@{/admin/modules}" method="post" th:object="${moduleForm}">
+                        <input type="hidden" th:field="*{id}">
+                        <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                        <div class="row">
+                            <label>
+                                Module Code
+                                <input type="text" th:field="*{code}" placeholder="Module Code">
+                                <span class="error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></span>
+                            </label>
+                            <label>
+                                Display Name
+                                <input type="text" th:field="*{displayName}" placeholder="Display Name">
+                                <span class="error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>
+                                Module Type
+                                <select th:field="*{type}" id="moduleType">
+                                    <option value="">Select type</option>
+                                    <option th:each="type : ${moduleTypes}" th:value="${type}" th:text="${type}"></option>
+                                </select>
+                                <span class="error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></span>
+                            </label>
+                            <label>
+                                Max File Size (MB)
+                                <input type="number" min="1" th:field="*{maxFileSizeMb}" placeholder="Max File Size (MB)">
+                                <span class="error" th:if="${#fields.hasErrors('maxFileSizeMb')}" th:errors="*{maxFileSizeMb}"></span>
+                            </label>
+                        </div>
+                        <div class="row conditional-group" id="imageFields">
+                            <label style="grid-column: 1 / -1;">
+                                Image Sizes
+                                <textarea th:field="*{imageSizeDefinitions}" placeholder="Image Sizes"></textarea>
+                                <span class="error" th:if="${#fields.hasErrors('imageSizeDefinitions')}" th:errors="*{imageSizeDefinitions}"></span>
+                            </label>
+                        </div>
+                        <div class="row conditional-group" id="videoFields">
+                            <label>
+                                Video Type
+                                <select th:field="*{videoType}">
+                                    <option value="">Select video type</option>
+                                    <option th:each="videoType : ${videoTypes}" th:value="${videoType}" th:text="${videoType}"></option>
+                                </select>
+                            </label>
+                            <label>
+                                Max Video Duration (seconds)
+                                <input type="number" min="1" th:field="*{maxVideoDurationSeconds}" placeholder="Max Video Duration (seconds)">
+                            </label>
+                        </div>
+                        <details class="form-disclosure" th:attr="open=${#fields.hasErrors('selectedMediaTypes') or #fields.hasErrors('customMediaTypes')} ? 'open' : null">
+                            <summary>
+                                <span>Upload Rules</span>
+                            </summary>
+                            <div class="form-disclosure-body">
+                                <p class="form-disclosure-copy">Keep this collapsed unless you need to restrict uploads to specific MIME types for this module.</p>
+                                <div class="media-scope-card">
+                                    <div class="media-scope-copy">
+                                        <span class="media-scope-eyebrow" id="moduleMediaTypeScopeEyebrow">Upload scope</span>
+                                        <strong id="moduleMediaTypeScopeTitle">Choose a module type to preview its allowed media families</strong>
+                                        <span class="media-scope-description" id="moduleMediaTypeScopeDescription">File modules can use any supported media families. Image and video modules are limited to their own families.</span>
+                                    </div>
+                                    <div class="media-scope-meta">
+                                        <span class="media-meta-pill">Visible presets: <span class="mono" id="moduleMediaTypeVisibleCountValue">0</span></span>
+                                        <span class="media-meta-pill">Allowed family: <span class="mono" id="moduleMediaTypeScopeFamilyValue">all</span></span>
+                                    </div>
+                                </div>
+                                <div class="media-selector-card">
+                                    <div class="media-selector-header">
+                                        <span class="field-title">Preset Media Types</span>
+                                        <p>Select preset MIME types that this module is allowed to accept.</p>
+                                    </div>
+                                    <div class="media-type-toolbar">
+                                        <span class="media-toolbar-pill">Presets react to module type</span>
+                                        <span class="media-toolbar-pill">Leave all unchecked to allow all supported types</span>
+                                    </div>
+                                    <div class="media-type-options" id="moduleMediaTypeOptions">
+                                        <label class="media-type-chip" th:each="mediaType : ${mediaTypeOptions}" th:attr="data-module-media-group=${#strings.substringBefore(mediaType, '/')}">
+                                            <input type="checkbox" th:field="*{selectedMediaTypes}" th:value="${mediaType}">
+                                            <span class="mono" th:text="${mediaType}"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="media-custom-card">
+                                    <div class="media-custom-header">
+                                        <span class="field-title">Custom MIME Types</span>
+                                        <p>Add one value per line for vendor-specific rules or wildcard entries.</p>
+                                    </div>
+                                    <textarea th:field="*{customMediaTypes}" placeholder="Custom MIME Types"></textarea>
+                                    <span class="error" th:if="${#fields.hasErrors('customMediaTypes')}" th:errors="*{customMediaTypes}"></span>
+                                </div>
+                            </div>
+                        </details>
+                        <div class="row">
+                            <label class="checkbox">
+                                <input type="checkbox" th:field="*{publicAccess}">
+                                Public Retrieval Allowed
+                            </label>
+                        </div>
+                        <div class="actions">
+                            <button type="submit" th:text="${moduleForm.id} != null ? 'Save Changes' : 'Create Module'"></button>
+                            <a class="button-secondary" th:if="${moduleForm.id} != null" th:href="@{/admin#modules}">Cancel</a>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="panel">
+                    <h2>Configured Modules</h2>
+                    <p class="hint">Review all module definitions, storage folders, and current limits in one place.</p>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Folder</th>
+                                <th>Limits</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${modules.isEmpty()}">
+                                <td colspan="5">No modules created yet.</td>
+                            </tr>
+                            <tr th:each="module : ${modules}">
+                                <td>
+                                    <div th:text="${module.displayName}"></div>
+                                    <div class="mono" th:text="${module.code}"></div>
+                                </td>
+                                <td>
+                                    <span class="pill" th:text="${module.type}"></span>
+                                    <div th:if="${module.videoType != null}" class="mono" th:text="${module.videoType}"></div>
+                                </td>
+                                <td class="mono" th:text="${module.storageFolder}"></td>
+                                <td>
+                                    <div th:if="${module.maxFileSizeMb != null}" th:text="'Size: ' + ${module.maxFileSizeMb} + ' MB'"></div>
+                                    <div th:if="${!module.imageSizes.isEmpty()}" th:each="imageSize : ${module.imageSizes}" th:text="'Image: ' + ${imageSize.code} + ' = ' + ${imageSize.width} + 'x' + ${imageSize.height}"></div>
+                                    <div th:if="${!module.supportedMediaTypes.isEmpty()}">
+                                        <span>Media:</span>
+                                        <span class="mono" th:each="mediaType, stat : ${module.supportedMediaTypes}" th:text="${stat.first ? mediaType : ', ' + mediaType}"></span>
+                                    </div>
+                                    <div th:if="${module.supportedMediaTypes.isEmpty()}">Media: All supported</div>
+                                    <div th:if="${module.maxVideoDurationSeconds != null}" th:text="'Video: ' + ${module.maxVideoDurationSeconds} + ' sec'"></div>
+                                    <div th:text="${module.publicAccess} ? 'Public access' : 'Private access'"></div>
+                                </td>
+                                <td>
+                                    <div class="actions">
+                                        <a class="button-secondary" th:href="@{'/admin?editModuleId=' + ${module.id} + '#modules'}">Edit</a>
+                                        <form class="inline-form" th:action="@{/admin/modules/{id}/delete(id=${module.id})}" method="post">
+                                            <button type="submit" class="button-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="settings">
+            <div class="panel-stack">
+                <section class="panel">
+                    <h2>Settings</h2>
+                    <p class="hint">Manage storage settings and, when the database is ready, run cleanup actions for items that were already soft-deleted from the admin UI.</p>
+                    <div th:if="${settingsSuccessMessage}" class="success" th:text="${settingsSuccessMessage}"></div>
+                    <section class="settings-block">
+                        <div class="settings-header">
+                            <h3>Storage Root</h3>
+                            <p class="hint" style="margin: 0;">Choose where Blob Store keeps module folders and generated assets on disk.</p>
+                        </div>
+                        <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell">
+                            <div class="row">
+                                <label style="grid-column: 1 / -1;">
+                                    Storage Root
+                                    <input type="text" th:field="*{rootDir}" placeholder="Storage Root">
+                                    <span class="error" th:if="${#fields.hasErrors('rootDir')}" th:errors="*{rootDir}"></span>
+                                </label>
+                            </div>
+                            <div class="media-scope-card">
+                                <div class="media-scope-copy">
+                                    <span class="media-scope-eyebrow">Active path</span>
+                                    <strong class="mono" th:text="${storageSettingsStatus.activeRootDir}"></strong>
+                                    <span class="media-scope-description">Saved changes apply after restart so existing file operations keep using the current storage root until then.</span>
+                                </div>
+                                <div class="media-scope-meta">
+                                    <span class="media-meta-pill" th:text="${storageSettingsStatus.restartRequired} ? 'Restart required' : 'Already active'"></span>
+                                    <span class="media-meta-pill mono" th:if="${storageSettingsStatus.savedRootDir != null}" th:text="'Saved: ' + ${storageSettingsStatus.savedRootDir}"></span>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <button type="submit">Save Storage Root</button>
+                            </div>
+                        </form>
+                    </section>
+                    <div class="danger-zone" th:if="${databaseStatus.databaseReady}">
+                        <div>
+                            <strong>Permanently Delete Deleted Files</strong>
+                            <p class="hint" style="margin: 8px 0 0;">This removes file records and stored originals that belong to deleted modules. Files waiting for deletion: <span class="mono" th:text="${deletedFileCount}"></span>.</p>
+                        </div>
+                        <form th:action="@{/admin/files/purge-deleted}" method="post" onsubmit="return window.confirm('Permanently delete files from deleted modules? This cannot be undone.');">
+                            <button type="submit" class="button-danger">Permanently Delete Deleted Files</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="uploads" th:if="${databaseStatus.databaseReady}">
+            <div class="panel">
+                <h2>Recent Uploads</h2>
+                <p class="hint">Inspect the latest uploaded assets and open them directly by retrieval name.</p>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Module</th>
+                            <th>Open</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${recentFiles.isEmpty()}">
+                            <td colspan="3">No uploads yet.</td>
+                        </tr>
+                        <tr th:each="file : ${recentFiles}">
+                            <td>
+                                <div th:text="${file.originalName}"></div>
+                                <div class="mono" th:text="${file.retrievalName}"></div>
+                            </td>
+                            <td class="mono" th:text="${file.moduleCode}"></td>
+                            <td>
+                                <a class="link mono" th:href="@{'/api/files/' + ${file.fileKey}}" target="_blank" th:text="${file.fileKey}"></a>
+                                <div class="mono" th:text="'/api/files/' + ${file.fileKey} + '?type=thumb'"></div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="api" th:if="${databaseStatus.databaseReady}">
+            <div class="panel-stack">
+                <section class="panel">
+                    <h2>API Documentation</h2>
+                    <p class="hint">Admin UI manages modules. Actual uploads and retrievals happen through REST endpoints.</p>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th>Upload</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">POST /api/files/{moduleCode}</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl -X POST &quot;__BASE_URL__/api/files/{moduleCode}&quot; -F &quot;file=@/path/to/file&quot;">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Retrieve</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/files/{fileKey}</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}&quot; --output downloaded-file">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Image Type</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/files/{fileKey}?type=thumb</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}?type=thumb&quot; --output image-thumb">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Modules</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/modules</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/modules&quot;">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Payload</th>
+                            <td class="mono">multipart/form-data with field name "file"</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="api-note">
+                        For images, request a generated type by adding <span class="mono">type</span>.
+                        Example:
+                        <span class="mono">/api/files/550e8400-e29b-41d4-a716-446655440000?type=thumb</span>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </section>
+</main>
+<script th:inline="javascript">
+    const moduleTypeSelect = document.getElementById("moduleType");
+    const imageFields = document.getElementById("imageFields");
+    const videoFields = document.getElementById("videoFields");
+    const databaseVendorSelect = document.getElementById("databaseVendor");
+    const databasePortInput = document.getElementById("databasePort");
+    const databaseFormPanel = document.getElementById("databaseFormPanel");
+    const showDatabaseFormButton = document.getElementById("showDatabaseFormButton");
+    const cancelDatabaseFormButton = document.getElementById("cancelDatabaseFormButton");
+    const moduleMediaTypeOptions = document.querySelectorAll("[data-module-media-group]");
+    const moduleMediaTypeScopeEyebrow = document.getElementById("moduleMediaTypeScopeEyebrow");
+    const moduleMediaTypeScopeTitle = document.getElementById("moduleMediaTypeScopeTitle");
+    const moduleMediaTypeScopeDescription = document.getElementById("moduleMediaTypeScopeDescription");
+    const moduleMediaTypeVisibleCountValue = document.getElementById("moduleMediaTypeVisibleCountValue");
+    const moduleMediaTypeScopeFamilyValue = document.getElementById("moduleMediaTypeScopeFamilyValue");
+    const tabButtons = document.querySelectorAll("[data-tab-target]");
+    const tabPanels = document.querySelectorAll("[data-tab-panel]");
+    const copyCurlButtons = document.querySelectorAll("[data-curl-template]");
+    const vendorPorts = {
+        POSTGRESQL: 5432,
+        MYSQL: 3306,
+        SQLSERVER: 1433,
+        ORACLE: 1521
+    };
+
+    function syncModuleFields() {
+        const value = moduleTypeSelect ? moduleTypeSelect.value : "";
+        const showImage = value === "IMAGE";
+        const showVideo = value === "VIDEO";
+
+        imageFields.hidden = !showImage;
+        videoFields.hidden = !showVideo;
+        syncModuleMediaSettings(value);
+    }
+
+    if (moduleTypeSelect) {
+        moduleTypeSelect.addEventListener("change", syncModuleFields);
+        syncModuleFields();
+    }
+
+    function syncModuleMediaSettings(moduleType) {
+        let visibleCount = 0;
+        moduleMediaTypeOptions.forEach(option => {
+            const group = option.dataset.moduleMediaGroup;
+            const shouldShow = !moduleType
+                    || moduleType === "FILE"
+                    || (moduleType === "IMAGE" && group === "image")
+                    || (moduleType === "VIDEO" && group === "video");
+            option.hidden = !shouldShow;
+            const checkbox = option.querySelector("input");
+            if (checkbox) {
+                checkbox.disabled = !shouldShow;
+            }
+            if (shouldShow) {
+                visibleCount += 1;
+            }
+        });
+
+        if (moduleMediaTypeVisibleCountValue) {
+            moduleMediaTypeVisibleCountValue.textContent = String(visibleCount);
+        }
+        if (moduleMediaTypeScopeEyebrow && moduleMediaTypeScopeTitle && moduleMediaTypeScopeDescription && moduleMediaTypeScopeFamilyValue) {
+            if (!moduleType) {
+                moduleMediaTypeScopeEyebrow.textContent = "Upload scope";
+                moduleMediaTypeScopeTitle.textContent = "Choose a module type to preview its allowed media families";
+                moduleMediaTypeScopeDescription.textContent = "File modules can use any supported media families. Image and video modules are limited to their own families.";
+                moduleMediaTypeScopeFamilyValue.textContent = "all";
+            } else if (moduleType === "IMAGE") {
+                moduleMediaTypeScopeEyebrow.textContent = "Image module";
+                moduleMediaTypeScopeTitle.textContent = "Only image media types can be selected here";
+                moduleMediaTypeScopeDescription.textContent = "Preset choices are filtered to image/* values so upload validation stays aligned with image processing rules.";
+                moduleMediaTypeScopeFamilyValue.textContent = "image/*";
+            } else if (moduleType === "VIDEO") {
+                moduleMediaTypeScopeEyebrow.textContent = "Video module";
+                moduleMediaTypeScopeTitle.textContent = "Only video media types can be selected here";
+                moduleMediaTypeScopeDescription.textContent = "Preset choices are filtered to video/* values so upload validation stays aligned with video module restrictions.";
+                moduleMediaTypeScopeFamilyValue.textContent = "video/*";
+            } else {
+                moduleMediaTypeScopeEyebrow.textContent = "File module";
+                moduleMediaTypeScopeTitle.textContent = "All preset media families are available";
+                moduleMediaTypeScopeDescription.textContent = "Use presets for common upload formats and add custom MIME types when a module needs tighter or vendor-specific rules.";
+                moduleMediaTypeScopeFamilyValue.textContent = "all";
+            }
+        }
+    }
+
+    function syncDatabasePort() {
+        const selectedVendor = databaseVendorSelect.value;
+        if (vendorPorts[selectedVendor]) {
+            databasePortInput.value = vendorPorts[selectedVendor];
+        }
+    }
+
+    databaseVendorSelect.addEventListener("change", syncDatabasePort);
+
+    if (showDatabaseFormButton && databaseFormPanel) {
+        showDatabaseFormButton.addEventListener("click", () => {
+            databaseFormPanel.classList.remove("is-hidden");
+            showDatabaseFormButton.classList.add("is-hidden");
+        });
+    }
+
+    if (cancelDatabaseFormButton && databaseFormPanel && showDatabaseFormButton) {
+        cancelDatabaseFormButton.addEventListener("click", () => {
+            databaseFormPanel.classList.add("is-hidden");
+            showDatabaseFormButton.classList.remove("is-hidden");
+        });
+    }
+
+    function setActiveTab(tabName) {
+        tabButtons.forEach(button => {
+            button.classList.toggle("is-active", button.dataset.tabTarget === tabName);
+        });
+        tabPanels.forEach(panel => {
+            panel.classList.toggle("is-active", panel.dataset.tabPanel === tabName);
+        });
+    }
+
+    tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            const tabName = button.dataset.tabTarget;
+            setActiveTab(tabName);
+            window.history.replaceState(null, "", "#" + tabName);
+        });
+    });
+
+    copyCurlButtons.forEach(button => {
+        const defaultLabel = button.innerHTML;
+        button.addEventListener("click", async () => {
+            const curlCommand = button.dataset.curlTemplate.replaceAll("__BASE_URL__", window.location.origin);
+            try {
+                await navigator.clipboard.writeText(curlCommand);
+                button.classList.add("is-copied");
+                button.textContent = "Copied";
+                window.setTimeout(() => {
+                    button.classList.remove("is-copied");
+                    button.innerHTML = defaultLabel;
+                }, 1600);
+            } catch (error) {
+                button.textContent = "Copy failed";
+                window.setTimeout(() => {
+                    button.innerHTML = defaultLabel;
+                }, 1600);
+            }
+        });
+    });
+
+    const hasConfiguredDatabase = /*[[${databaseStatus.savedConnectionConfigured}]]*/ false;
+    const databaseReady = /*[[${databaseStatus.databaseReady}]]*/ false;
+    const serverActiveTab = /*[[${activeTab}]]*/ null;
+    const initialTab = serverActiveTab
+        ? serverActiveTab
+        : (window.location.hash
+            ? window.location.hash.substring(1)
+            : (databaseReady && hasConfiguredDatabase ? "modules" : "database"));
+    if ([...tabPanels].some(panel => panel.dataset.tabPanel === initialTab)) {
+        setActiveTab(initialTab);
+    }
+</script>
+</body>
+</html>

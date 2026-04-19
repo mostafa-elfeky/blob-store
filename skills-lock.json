@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "Spring Boot Best Practices": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "3728a5ec2abc4627ec3778dcae1c7e6e8524211ea2a2788301167b66f84af8da"
+    }
+  }
+}

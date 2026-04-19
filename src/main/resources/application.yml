@@ -1,0 +1,25 @@
+server:
+  port: 4817
+
+spring:
+  application:
+    name: blob-store
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 250MB
+      max-request-size: 250MB
+
+blobstore:
+  database:
+    config-file: ./data/blob-store/database-connection.properties
+    bootstrap-database-path: ./data/blob-store/bootstrap/blob-store
+  storage:
+    config-file: ./data/blob-store/storage-settings.properties
+    root-dir: ./data/blob-store
