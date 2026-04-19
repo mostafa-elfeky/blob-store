@@ -43,6 +43,9 @@ public class ModuleService {
                 .map(size -> size.getCode() + "=" + size.getWidth() + "x" + size.getHeight())
                 .reduce((left, right) -> left + "\n" + right)
                 .orElse(null));
+        form.setOriginalImageSizeDefinition(module.getOriginalImageWidth() == null || module.getOriginalImageHeight() == null
+                ? null
+                : module.getOriginalImageWidth() + "x" + module.getOriginalImageHeight());
         form.setSelectedMediaTypes(module.getSupportedMediaTypes().stream()
                 .filter(ModuleMediaTypeSupport::isPreset)
                 .toList());
@@ -90,6 +93,7 @@ public class ModuleService {
         module.setPublicAccess(form.isPublicAccess());
         module.setMaxFileSizeMb(form.getMaxFileSizeMb());
         module.setImageSizes(resolveImageSizes(form));
+        applyOriginalImageSize(module, form);
         module.setSupportedMediaTypes(resolveSupportedMediaTypes(form));
         module.setMaxVideoDurationSeconds(form.getType() == ModuleType.VIDEO ? form.getMaxVideoDurationSeconds() : null);
         return moduleRepository.save(module);
@@ -111,6 +115,7 @@ public class ModuleService {
         module.setPublicAccess(form.isPublicAccess());
         module.setMaxFileSizeMb(form.getMaxFileSizeMb());
         module.setImageSizes(resolveImageSizes(form));
+        applyOriginalImageSize(module, form);
         module.setSupportedMediaTypes(resolveSupportedMediaTypes(form));
         module.setMaxVideoDurationSeconds(form.getType() == ModuleType.VIDEO ? form.getMaxVideoDurationSeconds() : null);
         module.setStorageFolder(moduleCode);
@@ -143,6 +148,24 @@ public class ModuleService {
             return List.of();
         }
         return imageSizeDefinitionParser.parse(form.getImageSizeDefinitions());
+    }
+
+    private void applyOriginalImageSize(ModuleEntity module, ModuleForm form) {
+        if (form.getType() != ModuleType.IMAGE) {
+            module.setOriginalImageWidth(null);
+            module.setOriginalImageHeight(null);
+            return;
+        }
+
+        ImageDimensions originalImageSize = imageSizeDefinitionParser.parseOptionalOriginalSize(form.getOriginalImageSizeDefinition());
+        if (originalImageSize == null) {
+            module.setOriginalImageWidth(null);
+            module.setOriginalImageHeight(null);
+            return;
+        }
+
+        module.setOriginalImageWidth(originalImageSize.width());
+        module.setOriginalImageHeight(originalImageSize.height());
     }
 
     private List<String> resolveSupportedMediaTypes(ModuleForm form) {

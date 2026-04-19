@@ -45,6 +45,7 @@ API details are available from the admin UI. The platform exposes module and fil
 
 ## Notes
 
-- Image size definitions use the format `code=WIDTHxHEIGHT`
+- Image size definitions use one `code=WIDTHxHEIGHT` entry per line
+- Image modules can optionally enforce the uploaded original size with `WIDTHxHEIGHT`
 - Video modules require `videoType`
 - Stored files are written to the configured storage root under the module folder

@@ -58,6 +58,10 @@ public class ModuleEntity {
     @CollectionTable(name = "module_image_sizes", joinColumns = @JoinColumn(name = "module_id"))
     private List<ImageSizeDefinition> imageSizes = new ArrayList<>();
 
+    private Integer originalImageWidth;
+
+    private Integer originalImageHeight;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "module_supported_media_types", joinColumns = @JoinColumn(name = "module_id"))
     @Column(name = "media_type", nullable = false, length = 150)

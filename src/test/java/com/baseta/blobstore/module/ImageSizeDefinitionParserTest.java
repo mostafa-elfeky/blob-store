@@ -35,4 +35,23 @@ class ImageSizeDefinitionParserTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid image size dimensions. Use numeric WIDTHxHEIGHT");
     }
+
+    @Test
+    void shouldParseOptionalOriginalImageSize() {
+        ImageDimensions dimensions = parser.parseOptionalOriginalSize(" 1200x630 ");
+
+        assertThat(dimensions).isEqualTo(new ImageDimensions(1200, 630));
+    }
+
+    @Test
+    void shouldAllowBlankOptionalOriginalImageSize() {
+        assertThat(parser.parseOptionalOriginalSize("   ")).isNull();
+    }
+
+    @Test
+    void shouldRejectInvalidOptionalOriginalImageSize() {
+        assertThatThrownBy(() -> parser.parseOptionalOriginalSize("1200"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid original image size. Use WIDTHxHEIGHT");
+    }
 }

@@ -17,6 +17,7 @@ public class ModuleView {
     private final boolean publicAccess;
     private final Integer maxFileSizeMb;
     private final List<ImageSizeView> imageSizes;
+    private final ImageSizeView originalImageSize;
     private final List<String> supportedMediaTypes;
     private final Integer maxVideoDurationSeconds;
 
@@ -31,6 +32,9 @@ public class ModuleView {
                 entity.isPublicAccess(),
                 entity.getMaxFileSizeMb(),
                 entity.getImageSizes().stream().map(ImageSizeView::fromEntity).toList(),
+                entity.getOriginalImageWidth() == null || entity.getOriginalImageHeight() == null
+                        ? null
+                        : new ImageSizeView("original", entity.getOriginalImageWidth(), entity.getOriginalImageHeight()),
                 List.copyOf(entity.getSupportedMediaTypes()),
                 entity.getMaxVideoDurationSeconds()
         );

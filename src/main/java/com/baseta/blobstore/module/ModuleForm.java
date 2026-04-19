@@ -38,6 +38,9 @@ public class ModuleForm {
     @Size(max = 4000)
     private String imageSizeDefinitions;
 
+    @Size(max = 50)
+    private String originalImageSizeDefinition;
+
     private List<String> selectedMediaTypes = new ArrayList<>();
 
     @Size(max = 2000)

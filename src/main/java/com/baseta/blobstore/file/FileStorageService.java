@@ -157,13 +157,40 @@ public class FileStorageService {
             if (!ModuleMediaTypeSupport.matches(contentType, module.getSupportedMediaTypes())) {
                 throw new IllegalArgumentException("Uploaded file media type is not allowed");
             }
+        } else {
+            if (module.getType() == ModuleType.IMAGE && IMAGE_PREFIXES.stream().noneMatch(contentType::startsWith)) {
+                throw new IllegalArgumentException("Module accepts images only");
+            }
+            if (module.getType() == ModuleType.VIDEO && VIDEO_PREFIXES.stream().noneMatch(contentType::startsWith)) {
+                throw new IllegalArgumentException("Module accepts videos only");
+            }
+        }
+        validateOriginalImageSize(module, multipartFile);
+    }
+
+    private void validateOriginalImageSize(ModuleEntity module, MultipartFile multipartFile) {
+        if (module.getType() != ModuleType.IMAGE
+                || module.getOriginalImageWidth() == null
+                || module.getOriginalImageHeight() == null) {
             return;
         }
-        if (module.getType() == ModuleType.IMAGE && IMAGE_PREFIXES.stream().noneMatch(contentType::startsWith)) {
-            throw new IllegalArgumentException("Module accepts images only");
+
+        BufferedImage image;
+        try (InputStream inputStream = multipartFile.getInputStream()) {
+            image = ImageIO.read(inputStream);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read uploaded image", exception);
         }
-        if (module.getType() == ModuleType.VIDEO && VIDEO_PREFIXES.stream().noneMatch(contentType::startsWith)) {
-            throw new IllegalArgumentException("Module accepts videos only");
+        if (image == null) {
+            throw new IllegalArgumentException("Unsupported image format");
+        }
+        if (image.getWidth() != module.getOriginalImageWidth() || image.getHeight() != module.getOriginalImageHeight()) {
+            throw new IllegalArgumentException(
+                    "Uploaded image must match the original size "
+                            + module.getOriginalImageWidth()
+                            + "x"
+                            + module.getOriginalImageHeight()
+            );
         }
     }
 

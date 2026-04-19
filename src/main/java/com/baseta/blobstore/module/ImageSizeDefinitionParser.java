@@ -40,12 +40,24 @@ class ImageSizeDefinitionParser {
             throw new IllegalArgumentException("Duplicate image size code: " + code);
         }
 
-        String[] dimensions = parts[1].trim().toLowerCase(Locale.ROOT).split("x", 2);
-        if (dimensions.length != 2) {
-            throw new IllegalArgumentException("Invalid image size dimensions. Use code=WIDTHxHEIGHT");
-        }
+        ImageDimensions dimensions = parseDimensions(parts[1], "Invalid image size dimensions. Use code=WIDTHxHEIGHT");
+        return new ImageSizeDefinition(code, dimensions.width(), dimensions.height());
+    }
 
-        return new ImageSizeDefinition(code, parseDimension(dimensions[0]), parseDimension(dimensions[1]));
+    ImageDimensions parseOptionalOriginalSize(String source) {
+        String normalizedSource = source == null ? "" : source.trim();
+        if (normalizedSource.isBlank()) {
+            return null;
+        }
+        return parseDimensions(normalizedSource, "Invalid original image size. Use WIDTHxHEIGHT");
+    }
+
+    private ImageDimensions parseDimensions(String source, String invalidFormatMessage) {
+        String[] dimensions = source.trim().toLowerCase(Locale.ROOT).split("x", 2);
+        if (dimensions.length != 2) {
+            throw new IllegalArgumentException(invalidFormatMessage);
+        }
+        return new ImageDimensions(parseDimension(dimensions[0]), parseDimension(dimensions[1]));
     }
 
     private boolean isDuplicateCode(String code, List<ImageSizeDefinition> sizes) {
