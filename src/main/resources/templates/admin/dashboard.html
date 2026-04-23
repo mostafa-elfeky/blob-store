@@ -758,6 +758,76 @@
             display: grid;
             gap: 4px;
         }
+        .docs-hero-card {
+            display: grid;
+            gap: 18px;
+            padding: 24px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 24px;
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.14), transparent 32%),
+                    linear-gradient(135deg, rgba(255, 250, 244, 0.96), rgba(255, 255, 255, 0.82));
+        }
+        .docs-eyebrow {
+            display: inline-flex;
+            width: fit-content;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(127, 59, 8, 0.08);
+            color: var(--accent-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .docs-hero-card h2 {
+            margin: 0;
+            font-size: clamp(1.6rem, 3vw, 2.3rem);
+            line-height: 1;
+        }
+        .docs-hero-card p {
+            margin: 0;
+            max-width: 72ch;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .docs-highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .docs-highlight-card {
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            background: rgba(255, 255, 255, 0.72);
+        }
+        .docs-highlight-card strong {
+            font-size: 0.98rem;
+        }
+        .docs-highlight-card span {
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .docs-section-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .docs-point {
+            display: grid;
+            gap: 6px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.1);
+            background: rgba(255, 255, 255, 0.68);
+        }
+        .docs-point span {
+            color: var(--muted);
+            line-height: 1.55;
+        }
         .panel-stack {
             display: grid;
             gap: 20px;
@@ -925,7 +995,8 @@
                 grid-template-columns: 1fr;
             }
             .media-settings-layout,
-            .media-selector-grid {
+            .media-selector-grid,
+            .docs-highlight-grid {
                 grid-template-columns: 1fr;
             }
             .module-project-row {
@@ -946,8 +1017,7 @@
     <section class="hero">
         <div class="hero-top">
             <div class="hero-copy">
-                <h1>Blob Store Control Room</h1>
-                <p>Design project-based upload modules for files, images, and video, then run the whole asset pipeline from one place. Set up storage and database connections, manage validation rules, and review generated variants without leaving the dashboard.</p>
+                <h1>Blob Store</h1>
             </div>
             <div class="hero-actions">
                 <form th:action="@{/logout}" method="post" class="inline-form">
@@ -959,15 +1029,138 @@
 
     <section class="tab-shell">
         <nav class="tab-bar" aria-label="Dashboard sections">
-            <button type="button" class="tab-button is-active" data-tab-target="database">Database</button>
+            <button type="button" class="tab-button is-active" data-tab-target="docs">Docs</button>
+            <button type="button" class="tab-button" data-tab-target="database">Database</button>
             <button type="button" class="tab-button" data-tab-target="modules" th:if="${databaseStatus.databaseReady}">Modules</button>
             <button type="button" class="tab-button" data-tab-target="settings">Settings</button>
             <button type="button" class="tab-button" data-tab-target="uploads" th:if="${databaseStatus.databaseReady}">Uploads</button>
-            <button type="button" class="tab-button" data-tab-target="api" th:if="${databaseStatus.databaseReady}">API Documentation</button>
             <button type="button" class="tab-button" data-tab-target="logs">Logs</button>
         </nav>
 
-        <section class="tab-panel is-active" data-tab-panel="database">
+        <section class="tab-panel is-active" data-tab-panel="docs">
+            <div class="panel-stack">
+                <section class="panel">
+                    <div class="docs-hero-card">
+                        <span class="docs-eyebrow">Quick Start</span>
+                        <div class="docs-section-grid">
+                            <h2>Blob Store is the control layer for structured uploads and retrieval.</h2>
+                            <p>Use it to define project-based upload modules, enforce validation rules, generate image variants, and expose file APIs to other systems. The rest of the dashboard handles configuration, operations, and observability; this tab gives you the fast overview.</p>
+                        </div>
+                        <div class="docs-highlight-grid">
+                            <article class="docs-highlight-card">
+                                <strong>Organize by project</strong>
+                                <span>Create a project once, then group related modules under it so storage paths and admin structure stay predictable.</span>
+                            </article>
+                            <article class="docs-highlight-card">
+                                <strong>Control file behavior</strong>
+                                <span>Each module defines allowed media types, size limits, privacy rules, and image processing requirements.</span>
+                            </article>
+                            <article class="docs-highlight-card">
+                                <strong>Serve other apps</strong>
+                                <span>External systems upload and retrieve files through the API layer instead of using the admin UI directly.</span>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>Security Notes</h2>
+                    <p class="hint">Admin access and API access are intentionally separated so operational access does not get mixed with application integration access.</p>
+                    <div class="docs-section-grid">
+                        <div class="docs-point">
+                            <strong>Admin UI</strong>
+                            <span>The dashboard uses form login with a local admin account loaded from <span class="mono">blobstore.admin.config-file</span>. This is the right place for internal operations access, not for application-to-application traffic.</span>
+                        </div>
+                        <div class="docs-point">
+                            <strong>API authentication</strong>
+                            <span>Application-facing APIs use bearer JWT authentication. Configure the signing secret with <span class="mono">blobstore.api-security.jwt-secret</span> and issue tokens from your own integration layer or identity service.</span>
+                        </div>
+                        <div class="docs-point">
+                            <strong>Public vs private files</strong>
+                            <span>Modules marked with Public Retrieval Allowed can be retrieved anonymously. Private modules require an authenticated token for file download and metadata access.</span>
+                        </div>
+                        <div class="docs-point">
+                            <strong>Recommended token scopes</strong>
+                            <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Add a dedicated read scope later if private-file readers should be narrower than general authenticated clients.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2>API Reference</h2>
+                    <p class="hint">Use these endpoints from other services. Configuration happens in the dashboard; upload and retrieval flows happen through the REST API.</p>
+                    <table>
+                        <tbody>
+                        <tr>
+                            <th>Upload</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">POST /api/files/{moduleCode}</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl -X POST &quot;__BASE_URL__/api/files/{moduleCode}&quot; -H &quot;Authorization: Bearer __TOKEN__&quot; -F &quot;file=@/path/to/file&quot;">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Retrieve</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/files/{fileKey}</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}&quot; --output downloaded-file">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Image Variant</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/files/{fileKey}?type=thumb</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}?type=thumb&quot; --output image-thumb">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Modules</th>
+                            <td>
+                                <div class="api-row">
+                                    <span class="mono">GET /api/modules</span>
+                                    <button
+                                            type="button"
+                                            class="button-secondary copy-curl-button"
+                                            data-curl-template="curl &quot;__BASE_URL__/api/modules&quot; -H &quot;Authorization: Bearer __TOKEN__&quot;">
+                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Payload</th>
+                            <td class="mono">multipart/form-data with field name "file"; image modules can also enforce an exact original size configured as WIDTHxHEIGHT</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="api-note">
+                        Retrieval can stay anonymous only when a module is marked public. Uploads always require a bearer token with the appropriate scope, and private file reads require authenticated access.
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="database">
             <div class="panel">
                 <div class="database-shell">
                     <div class="database-overview">
@@ -1390,83 +1583,6 @@
             </div>
         </section>
 
-        <section class="tab-panel" data-tab-panel="api" th:if="${databaseStatus.databaseReady}">
-            <div class="panel-stack">
-                <section class="panel">
-                    <h2>API Documentation</h2>
-                    <p class="hint">Admin UI manages modules. Actual uploads and retrievals happen through REST endpoints.</p>
-                    <table>
-                        <tbody>
-                        <tr>
-                            <th>Upload</th>
-                            <td>
-                                <div class="api-row">
-                                    <span class="mono">POST /api/files/{moduleCode}</span>
-                                    <button
-                                            type="button"
-                                            class="button-secondary copy-curl-button"
-                                            data-curl-template="curl -X POST &quot;__BASE_URL__/api/files/{moduleCode}&quot; -F &quot;file=@/path/to/file&quot;">
-                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Retrieve</th>
-                            <td>
-                                <div class="api-row">
-                                    <span class="mono">GET /api/files/{fileKey}</span>
-                                    <button
-                                            type="button"
-                                            class="button-secondary copy-curl-button"
-                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}&quot; --output downloaded-file">
-                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Image Type</th>
-                            <td>
-                                <div class="api-row">
-                                    <span class="mono">GET /api/files/{fileKey}?type=thumb</span>
-                                    <button
-                                            type="button"
-                                            class="button-secondary copy-curl-button"
-                                            data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}?type=thumb&quot; --output image-thumb">
-                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Modules</th>
-                            <td>
-                                <div class="api-row">
-                                    <span class="mono">GET /api/modules</span>
-                                    <button
-                                            type="button"
-                                            class="button-secondary copy-curl-button"
-                                            data-curl-template="curl &quot;__BASE_URL__/api/modules&quot;">
-                                        <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Payload</th>
-                            <td class="mono">multipart/form-data with field name "file"; image modules can also enforce an exact original size configured as WIDTHxHEIGHT</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <div class="api-note">
-                        For images, request a generated type by adding <span class="mono">type</span>.
-                        Example:
-                        <span class="mono">/api/files/550e8400-e29b-41d4-a716-446655440000?type=thumb</span>
-                    </div>
-                </section>
-            </div>
-        </section>
     </section>
 </main>
 
@@ -1704,7 +1820,7 @@
         ? serverActiveTab
         : (window.location.hash
             ? window.location.hash.substring(1)
-            : (databaseReady && hasConfiguredDatabase ? "modules" : "database"));
+            : "docs");
     if ([...tabPanels].some(panel => panel.dataset.tabPanel === initialTab)) {
         setActiveTab(initialTab);
     }
