@@ -89,7 +89,7 @@ public class FileStorageService {
     }
 
     public List<StoredFileView> findRecent() {
-        return storedFileRepository.findTop20ByOrderByCreatedAtDesc().stream()
+        return storedFileRepository.findTop20ByModuleDeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(StoredFileView::fromEntity)
                 .toList();
     }

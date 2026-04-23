@@ -38,9 +38,7 @@ public class ProjectService {
                     ProjectForm form = new ProjectForm();
                     form.setCode(DEFAULT_PROJECT_CODE);
                     form.setDisplayName(DEFAULT_PROJECT_NAME);
-                    ProjectEntity project = create(form);
-                    log.info("Created default project '{}'", project.getCode());
-                    return project;
+                    return create(form, true);
                 });
     }
 
@@ -59,6 +57,10 @@ public class ProjectService {
 
     @Transactional
     public ProjectEntity create(ProjectForm form) {
+        return create(form, false);
+    }
+
+    private ProjectEntity create(ProjectForm form, boolean defaultProject) {
         String projectCode = ModuleCodeNormalizer.normalize(form.getCode(), "Project code");
         String displayName = form.getDisplayName().trim();
 
@@ -73,7 +75,11 @@ public class ProjectService {
         project.setCode(projectCode);
         project.setDisplayName(displayName);
         ProjectEntity savedProject = projectRepository.save(project);
-        log.info("Created project '{}'", savedProject.getCode());
+        if (defaultProject) {
+            log.info("Created default project '{}'", savedProject.getCode());
+        } else {
+            log.info("Created project '{}'", savedProject.getCode());
+        }
         return savedProject;
     }
 }

@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/files")
+@Slf4j
 @RequiredArgsConstructor
 public class FileApiController {
 
@@ -63,11 +65,20 @@ public class FileApiController {
                 .build()
                 .toString();
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(payload.getContentType()))
+                .contentType(resolveResponseMediaType(payload.getContentType()))
                 .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, EXPOSE_HEADERS)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                 .contentLength(payload.getContentLength())
                 .body(new InputStreamResource(payload.getInputStream()));
+    }
+
+    private MediaType resolveResponseMediaType(String contentType) {
+        try {
+            return MediaType.parseMediaType(contentType);
+        } catch (IllegalArgumentException exception) {
+            log.warn("Invalid stored content type '{}'; falling back to application/octet-stream", contentType);
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 
     @GetMapping("/health")

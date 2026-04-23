@@ -192,15 +192,17 @@ public class AdminController {
         }
 
         try {
-            storageSettingsService.save(storageSettingsForm);
+            StorageSettingsService.SaveResult result = storageSettingsService.save(storageSettingsForm);
+            redirectAttributes.addFlashAttribute(
+                    "settingsSuccessMessage",
+                    result == StorageSettingsService.SaveResult.UNCHANGED
+                            ? "Storage root is unchanged."
+                            : "Storage root saved. Restart the application to apply the new location."
+            );
         } catch (IllegalArgumentException exception) {
             bindingResult.reject("storage.form", exception.getMessage());
             return renderSettingsErrorState(model);
         }
-        redirectAttributes.addFlashAttribute(
-                "settingsSuccessMessage",
-                "Storage root saved. Restart the application to apply the new location."
-        );
         redirectAttributes.addFlashAttribute("storageSettingsForm", storageSettingsForm);
         redirectAttributes.addFlashAttribute("activeTab", "settings");
         return "redirect:/admin#settings";

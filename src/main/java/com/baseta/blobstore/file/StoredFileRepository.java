@@ -15,5 +15,5 @@ public interface StoredFileRepository extends JpaRepository<StoredFileEntity, Lo
 
     long countByModuleDeletedAtIsNotNull();
 
-    List<StoredFileEntity> findTop20ByOrderByCreatedAtDesc();
+    List<StoredFileEntity> findTop20ByModuleDeletedAtIsNullOrderByCreatedAtDesc();
 }

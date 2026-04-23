@@ -71,8 +71,8 @@ public class ModuleService {
     @Transactional
     public ModuleEntity create(ModuleForm form) {
         String moduleCode = ModuleCodeNormalizer.normalize(form.getCode(), "Module code");
-        if (moduleRepository.existsByCodeIgnoreCaseAndDeletedAtIsNull(moduleCode)) {
-            throw new IllegalArgumentException("Module code already exists");
+        if (moduleRepository.existsByCodeIgnoreCase(moduleCode)) {
+            throw new IllegalArgumentException("Module code already exists or was used before");
         }
 
         ModuleEntity module = new ModuleEntity();

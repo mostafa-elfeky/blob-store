@@ -13,6 +13,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StorageSettingsService {
 
+    public enum SaveResult {
+        UPDATED,
+        UNCHANGED
+    }
+
     private final StorageRuntimeProperties runtimeProperties;
     private final StorageSettingsStore storageSettingsStore;
 
@@ -46,7 +51,7 @@ public class StorageSettingsService {
         );
     }
 
-    public void save(StorageSettingsForm form) {
+    public SaveResult save(StorageSettingsForm form) {
         Path savedRootPath = resolveRootPath(form.getRootDir());
         boolean changingRoot = !savedRootPath.equals(activeRootPath);
         if (changingRoot && !form.isAcknowledgeRisk()) {
@@ -57,10 +62,11 @@ public class StorageSettingsService {
                 .filter(savedPath -> savedPath.equals(savedRootPath))
                 .isPresent()) {
             log.info("Storage root setting unchanged: '{}'", savedRootPath);
-            return;
+            return SaveResult.UNCHANGED;
         }
         storageSettingsStore.saveRootDir(savedRootPath.toString());
         log.info("Saved storage root setting '{}'; restart required to apply", savedRootPath);
+        return SaveResult.UPDATED;
     }
 
     private Path resolveRootPath(String rootDir) {

@@ -12,5 +12,7 @@ public interface ModuleRepository extends JpaRepository<ModuleEntity, Long> {
 
     Optional<ModuleEntity> findByIdAndDeletedAtIsNull(Long id);
 
+    boolean existsByCodeIgnoreCase(String code);
+
     boolean existsByCodeIgnoreCaseAndDeletedAtIsNull(String code);
 }

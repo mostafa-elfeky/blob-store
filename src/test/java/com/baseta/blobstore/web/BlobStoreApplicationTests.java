@@ -295,6 +295,30 @@ class BlobStoreApplicationTests {
     }
 
     @Test
+    void shouldNotAllowReusingSoftDeletedModuleCode() {
+        ModuleForm form = new ModuleForm();
+        form.setCode("retired-images");
+        form.setDisplayName("Retired Images");
+        form.setProjectId(createProject("retired-assets", "Retired Assets").getId());
+        form.setType(ModuleType.IMAGE);
+        form.setImageSizeDefinitions("thumb=80x80");
+
+        ModuleEntity module = moduleManagementService.save(form);
+        moduleManagementService.delete(module.getId());
+
+        ModuleForm replacement = new ModuleForm();
+        replacement.setCode("retired-images");
+        replacement.setDisplayName("Replacement Images");
+        replacement.setProjectId(createProject("replacement-assets", "Replacement Assets").getId());
+        replacement.setType(ModuleType.IMAGE);
+        replacement.setImageSizeDefinitions("thumb=80x80");
+
+        assertThatThrownBy(() -> moduleManagementService.save(replacement))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Module code already exists or was used before");
+    }
+
+    @Test
     void shouldSaveStorageRootFromSettingsPage() throws Exception {
         mockMvc.perform(post("/admin/storage-settings")
                         .param("rootDir", "build/alternate-storage")
@@ -315,6 +339,27 @@ class BlobStoreApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("System Logs")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString(marker)));
+    }
+
+    @Test
+    void shouldHideUploadsThatBelongToDeletedModulesFromRecentUploads() throws Exception {
+        ModuleForm form = new ModuleForm();
+        form.setCode("hidden-uploads");
+        form.setDisplayName("Hidden Uploads");
+        form.setProjectId(createProject("hidden-assets", "Hidden Assets").getId());
+        form.setType(ModuleType.FILE);
+
+        ModuleEntity module = moduleManagementService.save(form);
+        fileStorageService.store(
+                module.getCode(),
+                new MockMultipartFile("file", "hidden.txt", "text/plain", "hidden".getBytes())
+        );
+
+        moduleManagementService.delete(module.getId());
+
+        assertThat(fileStorageService.findRecent())
+                .extracting(StoredFileView::getOriginalName)
+                .doesNotContain("hidden.txt");
     }
 
     @Test
