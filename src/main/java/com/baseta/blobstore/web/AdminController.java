@@ -10,6 +10,8 @@ import com.baseta.blobstore.module.ModuleManagementService;
 import com.baseta.blobstore.module.ModuleMediaTypeSupport;
 import com.baseta.blobstore.module.ModuleService;
 import com.baseta.blobstore.module.ModuleType;
+import com.baseta.blobstore.project.ProjectForm;
+import com.baseta.blobstore.project.ProjectService;
 import com.baseta.blobstore.module.VideoType;
 import com.baseta.blobstore.storage.StorageSettingsForm;
 import com.baseta.blobstore.storage.StorageSettingsService;
@@ -36,6 +38,7 @@ public class AdminController {
     private final FileStorageService fileStorageService;
     private final InMemoryLogStore logStore;
     private final StorageSettingsService storageSettingsService;
+    private final ProjectService projectService;
 
     @GetMapping({"/", "/admin"})
     public String dashboard(
@@ -55,6 +58,7 @@ public class AdminController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("activeTab", "modules");
             ensureDashboardForms(model, moduleForm.getId());
             populateDashboardModel(model);
             return "admin/dashboard";
@@ -66,11 +70,43 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("successMessage", editing ? "Module updated successfully" : "Module created successfully");
         } catch (IllegalArgumentException exception) {
             bindingResult.reject("module.form", exception.getMessage());
+            model.addAttribute("activeTab", "modules");
             ensureDashboardForms(model, moduleForm.getId());
             populateDashboardModel(model);
             return "admin/dashboard";
         }
 
+        return "redirect:/admin#modules";
+    }
+
+    @PostMapping("/admin/projects")
+    public String saveProject(
+            @Valid @ModelAttribute("projectForm") ProjectForm projectForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("projectDialogOpen", true);
+            model.addAttribute("activeTab", "modules");
+            ensureDashboardForms(model, null);
+            populateDashboardModel(model);
+            return "admin/dashboard";
+        }
+
+        try {
+            projectService.create(projectForm);
+            redirectAttributes.addFlashAttribute("projectSuccessMessage", "Project created successfully");
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("project.form", exception.getMessage());
+            model.addAttribute("projectDialogOpen", true);
+            model.addAttribute("activeTab", "modules");
+            ensureDashboardForms(model, null);
+            populateDashboardModel(model);
+            return "admin/dashboard";
+        }
+
+        redirectAttributes.addFlashAttribute("activeTab", "modules");
         return "redirect:/admin#modules";
     }
 
@@ -173,6 +209,12 @@ public class AdminController {
         model.addAttribute("moduleTypes", ModuleType.values());
         model.addAttribute("videoTypes", VideoType.values());
         model.addAttribute("mediaTypeOptions", ModuleMediaTypeSupport.presetMediaTypes());
+        if (databaseStatus.isDatabaseReady()) {
+            projectService.ensureDefaultProject();
+            model.addAttribute("projects", projectService.findAll());
+        } else {
+            model.addAttribute("projects", java.util.List.of());
+        }
         model.addAttribute("modules", databaseStatus.isDatabaseReady() ? moduleService.findAll() : java.util.List.of());
         model.addAttribute("recentFiles", databaseStatus.isDatabaseReady() ? fileStorageService.findRecent() : java.util.List.of());
         model.addAttribute("deletedFileCount", databaseStatus.isDatabaseReady() ? fileStorageService.countFilesMarkedDeleted() : 0L);
@@ -202,7 +244,11 @@ public class AdminController {
 
     private void ensureDashboardForms(Model model, Long editModuleId) {
         if (!model.containsAttribute("moduleForm")) {
-            model.addAttribute("moduleForm", editModuleId == null ? new ModuleForm() : moduleService.buildForm(editModuleId));
+            ModuleForm moduleForm = editModuleId == null ? new ModuleForm() : moduleService.buildForm(editModuleId);
+            if (editModuleId == null && moduleForm.getProjectId() == null && databaseConnectionService.currentStatus().isDatabaseReady()) {
+                moduleForm.setProjectId(projectService.defaultProjectId());
+            }
+            model.addAttribute("moduleForm", moduleForm);
         }
         if (!model.containsAttribute("databaseForm")) {
             model.addAttribute("databaseForm", databaseConnectionService.currentForm());
@@ -210,8 +256,14 @@ public class AdminController {
         if (!model.containsAttribute("storageSettingsForm")) {
             model.addAttribute("storageSettingsForm", storageSettingsService.currentForm());
         }
+        if (!model.containsAttribute("projectForm")) {
+            model.addAttribute("projectForm", new ProjectForm());
+        }
         if (!model.containsAttribute("databaseFormOpen")) {
             model.addAttribute("databaseFormOpen", false);
+        }
+        if (!model.containsAttribute("projectDialogOpen")) {
+            model.addAttribute("projectDialogOpen", false);
         }
     }
 }

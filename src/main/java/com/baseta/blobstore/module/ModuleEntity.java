@@ -1,5 +1,6 @@
 package com.baseta.blobstore.module;
 
+import com.baseta.blobstore.project.ProjectEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.ElementCollection;
@@ -11,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,6 +39,10 @@ public class ModuleEntity {
 
     @Column(nullable = false, length = 150)
     private String displayName;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "project_id")
+    private ProjectEntity project;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

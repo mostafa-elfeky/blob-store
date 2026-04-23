@@ -10,6 +10,9 @@ import com.baseta.blobstore.module.ModuleService;
 import com.baseta.blobstore.module.ModuleType;
 import com.baseta.blobstore.module.ModuleView;
 import com.baseta.blobstore.module.VideoType;
+import com.baseta.blobstore.project.ProjectEntity;
+import com.baseta.blobstore.project.ProjectForm;
+import com.baseta.blobstore.project.ProjectService;
 import com.baseta.blobstore.storage.StorageSettingsService;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -64,6 +67,9 @@ class BlobStoreApplicationTests {
     private StorageSettingsService storageSettingsService;
 
     @Autowired
+    private ProjectService projectService;
+
+    @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -79,16 +85,18 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("product-images");
         form.setDisplayName("Product Images");
+        form.setProjectId(createProject("commerce-assets", "Commerce Assets").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80\nmedium=300x300");
         form.setMaxFileSizeMb(5);
 
         ModuleEntity module = moduleService.create(form);
+        Path moduleRoot = moduleRoot(module);
 
         assertThat(module.getCode()).isEqualTo("product-images");
-        assertThat(Files.isDirectory(Path.of("build/test-storage/product-images"))).isTrue();
+        assertThat(Files.isDirectory(moduleRoot)).isTrue();
         assertThat(module.getImageSizes()).hasSize(2);
-        assertThat(Files.isDirectory(Path.of("build/test-storage/product-images/original"))).isFalse();
+        assertThat(Files.isDirectory(moduleRoot.resolve("original"))).isFalse();
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -108,9 +116,9 @@ class BlobStoreApplicationTests {
         assertThat(payload.getContentLength()).isPositive();
         assertThat(variantPayload.getOriginalName()).isEqualTo("sample.jpg");
         assertThat(variantPayload.getContentLength()).isPositive();
-        assertThat(Files.exists(Path.of("build/test-storage/product-images/original").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/product-images/thumb").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/product-images/medium").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("thumb").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("medium").resolve(storedFile.getRetrievalName()))).isTrue();
     }
 
     @Test
@@ -118,6 +126,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("campaign-videos");
         form.setDisplayName("Campaign Videos");
+        form.setProjectId(createProject("video-assets", "Video Assets").getId());
         form.setType(ModuleType.VIDEO);
         form.setMaxFileSizeMb(25);
 
@@ -137,6 +146,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("documents-only");
         form.setDisplayName("Documents Only");
+        form.setProjectId(createProject("documents-team", "Documents Team").getId());
         form.setType(ModuleType.FILE);
         form.setSelectedMediaTypes(List.of("application/pdf"));
         form.setMaxFileSizeMb(25);
@@ -162,6 +172,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("png-images");
         form.setDisplayName("PNG Images");
+        form.setProjectId(createProject("media-library", "Media Library").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80");
         form.setSelectedMediaTypes(List.of("image/png"));
@@ -188,6 +199,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("image-config");
         form.setDisplayName("Image Config");
+        form.setProjectId(createProject("design-system", "Design System").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80");
         form.setCustomMediaTypes("application/pdf");
@@ -202,6 +214,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("documents");
         form.setDisplayName("Documents");
+        form.setProjectId(createProject("legal-assets", "Legal Assets").getId());
         form.setType(ModuleType.FILE);
         form.setMaxFileSizeMb(5);
 
@@ -221,6 +234,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("localized-documents");
         form.setDisplayName("Localized Documents");
+        form.setProjectId(createProject("localization-team", "Localization Team").getId());
         form.setType(ModuleType.FILE);
         form.setMaxFileSizeMb(5);
 
@@ -240,6 +254,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("letters");
         form.setDisplayName("Letters");
+        form.setProjectId(createProject("mail-room", "Mail Room").getId());
         form.setType(ModuleType.FILE);
         form.setMaxFileSizeMb(5);
 
@@ -262,6 +277,7 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("invoice-files");
         form.setDisplayName("Invoice Files");
+        form.setProjectId(createProject("finance-ops", "Finance Ops").getId());
         form.setType(ModuleType.FILE);
 
         ModuleEntity module = moduleManagementService.save(form);
@@ -305,10 +321,12 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("cleanup-images");
         form.setDisplayName("Cleanup Images");
+        form.setProjectId(createProject("cleanup-ops", "Cleanup Ops").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80");
 
         ModuleEntity module = moduleManagementService.save(form);
+        Path moduleRoot = moduleRoot(module);
         StoredFileView storedFile = fileStorageService.store(
                 module.getCode(),
                 new MockMultipartFile("file", "cleanup.jpg", "image/jpeg", createImageBytes())
@@ -318,13 +336,13 @@ class BlobStoreApplicationTests {
         moduleManagementService.delete(module.getId());
 
         assertThat(fileStorageService.countFilesMarkedDeleted()).isEqualTo(deletedFileCountBeforeDelete + 1);
-        assertThat(Files.exists(Path.of("build/test-storage/cleanup-images/original").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
 
         mockMvc.perform(post("/admin/files/purge-deleted"))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(fileStorageService.countFilesMarkedDeleted()).isZero();
-        assertThat(Files.exists(Path.of("build/test-storage/cleanup-images/original").resolve(storedFile.getRetrievalName()))).isFalse();
+        assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isFalse();
         assertThatThrownBy(() -> fileStorageService.open(storedFile.getFileKey()))
                 .isInstanceOf(com.baseta.blobstore.file.StoredFileNotFoundException.class);
     }
@@ -334,10 +352,12 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("catalog-images");
         form.setDisplayName("Catalog Images");
+        form.setProjectId(createProject("catalog-team", "Catalog Team").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80\nmedium=300x300");
 
         ModuleEntity module = moduleManagementService.save(form);
+        Path moduleRoot = moduleRoot(module);
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -353,10 +373,10 @@ class BlobStoreApplicationTests {
 
         moduleManagementService.save(updateForm);
 
-        assertThat(Files.exists(Path.of("build/test-storage/catalog-images/original").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/catalog-images/thumb").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/catalog-images/large").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/catalog-images/medium"))).isFalse();
+        assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("thumb").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("large").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("medium"))).isFalse();
 
         FilePayload largePayload = fileStorageService.open(storedFile.getFileKey(), "large");
         assertThat(largePayload.getContentLength()).isPositive();
@@ -367,10 +387,12 @@ class BlobStoreApplicationTests {
         ModuleForm form = new ModuleForm();
         form.setCode("archive-images");
         form.setDisplayName("Archive Images");
+        form.setProjectId(createProject("archive-team", "Archive Team").getId());
         form.setType(ModuleType.IMAGE);
         form.setImageSizeDefinitions("thumb=80x80");
 
         ModuleEntity module = moduleManagementService.save(form);
+        Path moduleRoot = moduleRoot(module);
         StoredFileView storedFile = fileStorageService.store(
                 module.getCode(),
                 new MockMultipartFile("file", "archive.jpg", "image/jpeg", createImageBytes())
@@ -378,12 +400,23 @@ class BlobStoreApplicationTests {
 
         moduleManagementService.delete(module.getId());
 
-        assertThat(Files.exists(Path.of("build/test-storage/archive-images/original").resolve(storedFile.getRetrievalName()))).isTrue();
-        assertThat(Files.exists(Path.of("build/test-storage/archive-images/thumb"))).isFalse();
+        assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
+        assertThat(Files.exists(moduleRoot.resolve("thumb"))).isFalse();
         assertThat(moduleService.findAll()).extracting(ModuleView::getCode).doesNotContain("archive-images");
         assertThat(fileStorageService.open(storedFile.getFileKey()).getContentLength()).isPositive();
         assertThatThrownBy(() -> fileStorageService.open(storedFile.getFileKey(), "thumb"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private ProjectEntity createProject(String code, String displayName) {
+        ProjectForm form = new ProjectForm();
+        form.setCode(code + "-" + System.nanoTime());
+        form.setDisplayName(displayName + " " + System.nanoTime());
+        return projectService.create(form);
+    }
+
+    private Path moduleRoot(ModuleEntity module) {
+        return Path.of("build/test-storage").resolve(module.getStorageFolder());
     }
 
     private byte[] createImageBytes() throws Exception {

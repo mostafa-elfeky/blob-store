@@ -11,6 +11,9 @@ public class ModuleView {
     private final Long id;
     private final String code;
     private final String displayName;
+    private final Long projectId;
+    private final String projectCode;
+    private final String projectDisplayName;
     private final ModuleType type;
     private final VideoType videoType;
     private final String storageFolder;
@@ -26,6 +29,9 @@ public class ModuleView {
                 entity.getId(),
                 entity.getCode(),
                 entity.getDisplayName(),
+                entity.getProject() == null ? null : entity.getProject().getId(),
+                entity.getProject() == null ? null : entity.getProject().getCode(),
+                entity.getProject() == null ? null : entity.getProject().getDisplayName(),
                 entity.getType(),
                 entity.getVideoType(),
                 entity.getStorageFolder(),

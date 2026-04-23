@@ -1,5 +1,7 @@
 package com.baseta.blobstore.module;
 
+import com.baseta.blobstore.project.ProjectEntity;
+import com.baseta.blobstore.project.ProjectService;
 import com.baseta.blobstore.storage.StorageSettingsService;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
@@ -18,6 +20,7 @@ public class ModuleService {
     private final ModuleRepository moduleRepository;
     private final StorageSettingsService storageSettingsService;
     private final ImageSizeDefinitionParser imageSizeDefinitionParser;
+    private final ProjectService projectService;
 
     public List<ModuleView> findAll() {
         return moduleRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc().stream()
@@ -35,6 +38,7 @@ public class ModuleService {
         form.setId(module.getId());
         form.setCode(module.getCode());
         form.setDisplayName(module.getDisplayName());
+        form.setProjectId(module.getProject() == null ? null : module.getProject().getId());
         form.setType(module.getType());
         form.setVideoType(module.getVideoType());
         form.setPublicAccess(module.isPublicAccess());
@@ -73,7 +77,7 @@ public class ModuleService {
 
         ModuleEntity module = new ModuleEntity();
         applyCreationFields(module, form, moduleCode);
-        ensureModuleDirectory(moduleCode);
+        ensureModuleDirectory(module.getStorageFolder());
         return moduleRepository.save(module);
     }
 
@@ -87,8 +91,12 @@ public class ModuleService {
         if (module.getType() != form.getType()) {
             throw new IllegalArgumentException("Module type cannot be changed");
         }
+        if (module.getProject() != null && !module.getProject().getId().equals(form.getProjectId())) {
+            throw new IllegalArgumentException("Module project cannot be changed");
+        }
 
         module.setDisplayName(form.getDisplayName().trim());
+        applyProject(module, form);
         module.setVideoType(resolveVideoType(form));
         module.setPublicAccess(form.isPublicAccess());
         module.setMaxFileSizeMb(form.getMaxFileSizeMb());
@@ -110,6 +118,7 @@ public class ModuleService {
     private void applyCreationFields(ModuleEntity module, ModuleForm form, String moduleCode) {
         module.setCode(moduleCode);
         module.setDisplayName(form.getDisplayName().trim());
+        applyProject(module, form);
         module.setType(form.getType());
         module.setVideoType(resolveVideoType(form));
         module.setPublicAccess(form.isPublicAccess());
@@ -118,7 +127,7 @@ public class ModuleService {
         applyOriginalImageSize(module, form);
         module.setSupportedMediaTypes(resolveSupportedMediaTypes(form));
         module.setMaxVideoDurationSeconds(form.getType() == ModuleType.VIDEO ? form.getMaxVideoDurationSeconds() : null);
-        module.setStorageFolder(moduleCode);
+        module.setStorageFolder(resolveStorageFolder(module.getProject(), moduleCode));
     }
 
     public Path resolveModuleDirectory(ModuleEntity module) {
@@ -131,6 +140,18 @@ public class ModuleService {
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to create module folder", exception);
         }
+    }
+
+    private void applyProject(ModuleEntity module, ModuleForm form) {
+        ProjectEntity project = projectService.getById(form.getProjectId());
+        module.setProject(project);
+        if (module.getCode() != null) {
+            module.setStorageFolder(resolveStorageFolder(project, module.getCode()));
+        }
+    }
+
+    private String resolveStorageFolder(ProjectEntity project, String moduleCode) {
+        return project.getCode() + "/" + moduleCode;
     }
 
     private VideoType resolveVideoType(ModuleForm form) {

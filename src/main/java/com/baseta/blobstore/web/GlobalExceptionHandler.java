@@ -2,6 +2,7 @@ package com.baseta.blobstore.web;
 
 import com.baseta.blobstore.file.StoredFileNotFoundException;
 import com.baseta.blobstore.module.ModuleNotFoundException;
+import com.baseta.blobstore.project.ProjectNotFoundException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ModuleNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleModuleNotFound(ModuleNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleProjectNotFound(ProjectNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("message", exception.getMessage()));
     }

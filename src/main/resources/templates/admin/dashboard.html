@@ -764,8 +764,103 @@
         .button-danger {
             background: linear-gradient(135deg, #b45309 0%, #7c2d12 100%);
         }
+        .button-ghost {
+            background: rgba(255, 255, 255, 0.52);
+            color: var(--accent-dark);
+            border: 1px dashed rgba(127, 59, 8, 0.24);
+            box-shadow: none;
+        }
         .inline-form {
             display: inline;
+        }
+        .project-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .project-toolbar-copy {
+            display: grid;
+            gap: 4px;
+        }
+        .project-toolbar-copy p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .project-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .project-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 8px 12px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            background: rgba(255, 255, 255, 0.78);
+            font-weight: 700;
+        }
+        .project-chip small {
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .module-project-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: end;
+        }
+        .module-project-row .button-secondary,
+        .module-project-row .button-ghost {
+            width: 100%;
+            justify-content: center;
+        }
+        .modal {
+            width: min(560px, calc(100vw - 32px));
+            border: 0;
+            border-radius: 28px;
+            padding: 0;
+            background: transparent;
+            box-shadow: 0 28px 70px rgba(31, 41, 51, 0.24);
+        }
+        .modal::backdrop {
+            background: rgba(31, 41, 51, 0.45);
+            backdrop-filter: blur(5px);
+        }
+        .modal-card {
+            display: grid;
+            gap: 18px;
+            padding: 24px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 28px;
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.14), transparent 30%),
+                    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(255, 248, 239, 0.96));
+        }
+        .modal-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: start;
+            justify-content: space-between;
+        }
+        .modal-header h3 {
+            margin: 0 0 4px;
+            font-size: 1.2rem;
+        }
+        .modal-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+        .modal-close {
+            min-width: 44px;
+            padding: 10px 14px;
         }
         .danger-zone {
             display: grid;
@@ -788,6 +883,9 @@
             }
             .media-settings-layout,
             .media-selector-grid {
+                grid-template-columns: 1fr;
+            }
+            .module-project-row {
                 grid-template-columns: 1fr;
             }
             .tab-bar {
@@ -957,12 +1055,27 @@
             <div class="panel-stack">
                 <section class="panel">
                     <h2 th:text="${moduleForm.id} != null ? 'Edit Module' : 'Create Module'"></h2>
-                    <p class="hint" th:if="${moduleForm.id} == null">Use a short, stable module code. The service creates a matching storage folder automatically.</p>
+                    <p class="hint" th:if="${moduleForm.id} == null">A default project is selected automatically. You can keep it or create another project if needed. The storage folder is created as <span class="mono">project-code/module-code</span>.</p>
                     <p class="hint" th:if="${moduleForm.id} != null">Editing keeps the current module code and type. New image sizes are generated from originals and removed sizes have their folders deleted.</p>
                     <div th:if="${successMessage}" class="success" th:text="${successMessage}"></div>
+                    <div th:if="${projectSuccessMessage}" class="success" th:text="${projectSuccessMessage}"></div>
                     <form th:action="@{/admin/modules}" method="post" th:object="${moduleForm}">
                         <input type="hidden" th:field="*{id}">
                         <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                        <div class="module-project-row">
+                            <label>
+                                Project
+                                <select
+                                        th:field="*{projectId}"
+                                        th:attr="disabled=${moduleForm.id != null and moduleForm.projectId != null} ? 'disabled' : null">
+                                    <option value="">Select project</option>
+                                    <option th:each="project : ${projects}" th:value="${project.id}" th:text="${project.displayName + ' · ' + project.code}"></option>
+                                </select>
+                                <input type="hidden" th:if="${moduleForm.id != null and moduleForm.projectId != null}" th:field="*{projectId}">
+                                <span class="error" th:if="${#fields.hasErrors('projectId')}" th:errors="*{projectId}"></span>
+                            </label>
+                            <button type="button" class="button-ghost" data-open-project-dialog>Create Project</button>
+                        </div>
                         <div class="row">
                             <label>
                                 Module Code
@@ -1075,11 +1188,12 @@
 
                 <section class="panel">
                     <h2>Configured Modules</h2>
-                    <p class="hint">Review all module definitions, storage folders, and current limits in one place.</p>
+                    <p class="hint">Review all module definitions, their owning project, storage folders, and current limits in one place.</p>
                     <div class="table-scroll">
                         <table>
                             <thead>
                             <tr>
+                                <th>Project</th>
                                 <th>Code</th>
                                 <th>Type</th>
                                 <th>Folder</th>
@@ -1089,9 +1203,13 @@
                             </thead>
                             <tbody>
                             <tr th:if="${modules.isEmpty()}">
-                                <td colspan="5">No modules created yet.</td>
+                                <td colspan="6">No modules created yet.</td>
                             </tr>
                             <tr th:each="module : ${modules}">
+                                <td>
+                                    <div th:text="${module.projectDisplayName ?: 'Unassigned'}"></div>
+                                    <div class="mono" th:if="${module.projectCode != null}" th:text="${module.projectCode}"></div>
+                                </td>
                                 <td>
                                     <div th:text="${module.displayName}"></div>
                                     <div class="mono" th:text="${module.code}"></div>
@@ -1289,6 +1407,36 @@
         </section>
     </section>
 </main>
+
+<dialog id="projectDialog" class="modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3>Create Project</h3>
+                <p>Projects group modules. Keep the code short and stable because it becomes part of the storage path.</p>
+            </div>
+            <button type="button" class="button-secondary modal-close" data-close-project-dialog>Close</button>
+        </div>
+        <form th:action="@{/admin/projects}" method="post" th:object="${projectForm}">
+            <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+            <label>
+                Project Code
+                <input type="text" th:field="*{code}" placeholder="customer-assets">
+                <span class="error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></span>
+            </label>
+            <label>
+                Display Name
+                <input type="text" th:field="*{displayName}" placeholder="Customer Assets">
+                <span class="error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+            </label>
+            <div class="actions">
+                <button type="submit">Create Project</button>
+                <button type="button" class="button-secondary" data-close-project-dialog>Cancel</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
 <script th:inline="javascript">
     const moduleTypeSelect = document.getElementById("moduleType");
     const imageFields = document.getElementById("imageFields");
@@ -1307,6 +1455,9 @@
     const tabButtons = document.querySelectorAll("[data-tab-target]");
     const tabPanels = document.querySelectorAll("[data-tab-panel]");
     const copyCurlButtons = document.querySelectorAll("[data-curl-template]");
+    const projectDialog = document.getElementById("projectDialog");
+    const projectDialogOpenButtons = document.querySelectorAll("[data-open-project-dialog]");
+    const projectDialogCloseButtons = document.querySelectorAll("[data-close-project-dialog]");
     const vendorPorts = {
         POSTGRESQL: 5432,
         MYSQL: 3306,
@@ -1398,6 +1549,38 @@
         });
     }
 
+    function openProjectDialog() {
+        if (!projectDialog) {
+            return;
+        }
+        if (typeof projectDialog.showModal === "function") {
+            if (!projectDialog.open) {
+                projectDialog.showModal();
+            }
+            return;
+        }
+        projectDialog.setAttribute("open", "open");
+    }
+
+    function closeProjectDialog() {
+        if (!projectDialog) {
+            return;
+        }
+        if (typeof projectDialog.close === "function" && projectDialog.open) {
+            projectDialog.close();
+            return;
+        }
+        projectDialog.removeAttribute("open");
+    }
+
+    projectDialogOpenButtons.forEach(button => {
+        button.addEventListener("click", openProjectDialog);
+    });
+
+    projectDialogCloseButtons.forEach(button => {
+        button.addEventListener("click", closeProjectDialog);
+    });
+
     function setActiveTab(tabName) {
         tabButtons.forEach(button => {
             button.classList.toggle("is-active", button.dataset.tabTarget === tabName);
@@ -1439,6 +1622,7 @@
     const hasConfiguredDatabase = /*[[${databaseStatus.savedConnectionConfigured}]]*/ false;
     const databaseReady = /*[[${databaseStatus.databaseReady}]]*/ false;
     const serverActiveTab = /*[[${activeTab}]]*/ null;
+    const projectDialogShouldOpen = /*[[${projectDialogOpen}]]*/ false;
     const initialTab = serverActiveTab
         ? serverActiveTab
         : (window.location.hash
@@ -1446,6 +1630,9 @@
             : (databaseReady && hasConfiguredDatabase ? "modules" : "database"));
     if ([...tabPanels].some(panel => panel.dataset.tabPanel === initialTab)) {
         setActiveTab(initialTab);
+    }
+    if (projectDialogShouldOpen) {
+        openProjectDialog();
     }
 </script>
 </body>

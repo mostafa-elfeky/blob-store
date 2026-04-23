@@ -26,6 +26,9 @@ public class ModuleForm {
     private String displayName;
 
     @NotNull
+    private Long projectId;
+
+    @NotNull
     private ModuleType type;
 
     private VideoType videoType;
