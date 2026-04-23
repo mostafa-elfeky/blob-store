@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blob Store Docs</title>
+    <style>
+        :root {
+            --panel: #fffdf8;
+            --ink: #1f2933;
+            --muted: #6b7280;
+            --line: #d7c9b8;
+            --accent: #bd6f38;
+            --accent-dark: #7f3b08;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--ink);
+            min-height: 100vh;
+            background:
+                    radial-gradient(circle at 12% 10%, rgba(189, 111, 56, 0.26), transparent 24%),
+                    radial-gradient(circle at 88% 14%, rgba(255, 244, 230, 0.82), transparent 22%),
+                    radial-gradient(circle at 50% -6%, rgba(255, 255, 255, 0.76), transparent 30%),
+                    linear-gradient(180deg, #fbf6ef 0%, #f6efe4 44%, #efe3d2 100%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .layout {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 48px;
+            display: grid;
+            gap: 20px;
+        }
+        .panel {
+            background:
+                    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0) 18%),
+                    color-mix(in srgb, var(--panel) 92%, white);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 18px 42px rgba(68, 43, 24, 0.08);
+        }
+        .panel h2 {
+            margin: 0 0 8px;
+            font-size: 1.3rem;
+        }
+        .hint {
+            color: var(--muted);
+            margin: 0 0 20px;
+        }
+        .panel-stack,
+        .docs-section-grid,
+        .status-list {
+            display: grid;
+            gap: 14px;
+        }
+        .status-list div {
+            display: grid;
+            gap: 4px;
+        }
+        .docs-hero-card {
+            display: grid;
+            gap: 18px;
+            padding: 24px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            border-radius: 24px;
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.14), transparent 32%),
+                    linear-gradient(135deg, rgba(255, 250, 244, 0.96), rgba(255, 255, 255, 0.82));
+        }
+        .docs-eyebrow {
+            display: inline-flex;
+            width: fit-content;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(127, 59, 8, 0.08);
+            color: var(--accent-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .docs-hero-card h2 {
+            margin: 0;
+            font-size: clamp(1.6rem, 3vw, 2.3rem);
+            line-height: 1;
+        }
+        .docs-hero-card p {
+            margin: 0;
+            max-width: 72ch;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .docs-highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .docs-highlight-card,
+        .docs-point {
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.12);
+            background: rgba(255, 255, 255, 0.72);
+        }
+        .docs-highlight-card span,
+        .docs-point span {
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(215, 201, 184, 0.8);
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted);
+            font-weight: 700;
+        }
+        .mono {
+            font-family: "IBM Plex Mono", monospace;
+        }
+        .api-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .api-note {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(189, 111, 56, 0.08);
+            color: var(--ink);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        @media (max-width: 900px) {
+            .docs-highlight-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="layout">
+    <section class="panel-stack">
+        <section class="panel">
+            <div class="docs-hero-card">
+                <span class="docs-eyebrow">Quick Start</span>
+                <div class="docs-section-grid">
+                    <h2>Blob Store is the control layer for structured uploads and retrieval.</h2>
+                    <p>Use it to define project-based upload modules, enforce validation rules, generate image variants, and expose file APIs to other systems. The rest of the dashboard handles configuration, operations, and observability; this page gives you the fast overview.</p>
+                </div>
+                <div class="docs-highlight-grid">
+                    <article class="docs-highlight-card">
+                        <strong>Organize by project</strong>
+                        <span>Create a project once, then group related modules under it so storage paths and admin structure stay predictable.</span>
+                    </article>
+                    <article class="docs-highlight-card">
+                        <strong>Control file behavior</strong>
+                        <span>Each module defines allowed media types, size limits, privacy rules, and image processing requirements.</span>
+                    </article>
+                    <article class="docs-highlight-card">
+                        <strong>Serve other apps</strong>
+                        <span>External systems upload and retrieve files through the API layer instead of using the admin UI directly.</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Security Notes</h2>
+            <p class="hint">Admin access and API access are intentionally separated so operational access does not get mixed with application integration access.</p>
+            <div class="docs-section-grid">
+                <div class="docs-point">
+                    <strong>Admin UI</strong>
+                    <span>The dashboard uses form login with a local admin account loaded from <span class="mono">blobstore.admin.config-file</span>. This is the right place for internal operations access, not for application-to-application traffic.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>API authentication</strong>
+                    <span>Application-facing APIs use bearer JWT authentication. Configure the signing secret with <span class="mono">blobstore.api-security.jwt-secret</span> and issue tokens from your own integration layer or identity service.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>Public vs private files</strong>
+                    <span>Modules marked with Public Retrieval Allowed can be retrieved anonymously. Private modules require an authenticated token for file download and metadata access.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>Recommended token scopes</strong>
+                    <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Add a dedicated read scope later if private-file readers should be narrower than general authenticated clients.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>API Reference</h2>
+            <p class="hint">Use these endpoints from other services. Configuration happens in the dashboard; upload and retrieval flows happen through the REST API.</p>
+            <table>
+                <tbody>
+                <tr>
+                    <th>Upload</th>
+                    <td class="mono">POST /api/files/{moduleCode}</td>
+                </tr>
+                <tr>
+                    <th>Retrieve</th>
+                    <td class="mono">GET /api/files/{fileKey}</td>
+                </tr>
+                <tr>
+                    <th>Image Variant</th>
+                    <td class="mono">GET /api/files/{fileKey}?type=thumb</td>
+                </tr>
+                <tr>
+                    <th>Modules</th>
+                    <td class="mono">GET /api/modules</td>
+                </tr>
+                <tr>
+                    <th>Payload</th>
+                    <td class="mono">multipart/form-data with field name "file"; image modules can also enforce an exact original size configured as WIDTHxHEIGHT</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="api-note">
+                Retrieval can stay anonymous only when a module is marked public. Uploads always require a bearer token with the appropriate scope, and private file reads require authenticated access.
+            </div>
+        </section>
+    </section>
+</main>
+</body>
+</html>

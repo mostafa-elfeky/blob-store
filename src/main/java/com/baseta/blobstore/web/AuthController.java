@@ -10,4 +10,9 @@ public class AuthController {
     public String login() {
         return "auth/login";
     }
+
+    @GetMapping("/docs")
+    public String docs() {
+        return "public/docs";
+    }
 }

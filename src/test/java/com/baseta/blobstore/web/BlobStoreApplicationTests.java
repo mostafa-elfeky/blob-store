@@ -357,6 +357,14 @@ class BlobStoreApplicationTests {
     }
 
     @Test
+    void shouldAllowPublicDocsBeforeLogin() throws Exception {
+        mockMvc.perform(get("/docs"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Blob Store")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("API Reference")));
+    }
+
+    @Test
     void shouldAllowAnonymousDownloadForPublicModule() throws Exception {
         ModuleForm form = new ModuleForm();
         form.setCode("public-files");
