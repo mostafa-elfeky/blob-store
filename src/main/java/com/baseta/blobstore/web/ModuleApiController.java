@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,12 +24,14 @@ public class ModuleApiController {
     private final ModuleService moduleService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_blobstore.modules.read')")
     public List<ModuleView> listModules() {
         return moduleService.findAll();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('SCOPE_blobstore.modules.write')")
     public ModuleView createModule(@Valid @RequestBody ModuleForm form) {
         ModuleEntity module = moduleService.create(form);
         return ModuleView.fromEntity(module);

@@ -54,6 +54,17 @@
             gap: 12px;
             margin-bottom: 24px;
         }
+        .hero-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hero-copy {
+            display: grid;
+            gap: 12px;
+        }
         .hero::before {
             content: "";
             width: min(180px, 32vw);
@@ -777,6 +788,19 @@
         .button-danger {
             background: linear-gradient(135deg, #b45309 0%, #7c2d12 100%);
         }
+        .button-subtle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 12px 18px;
+            border: 1px solid rgba(127, 59, 8, 0.18);
+            background: rgba(255, 255, 255, 0.68);
+            color: var(--accent-dark);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
         .button-ghost {
             background: rgba(255, 255, 255, 0.52);
             color: var(--accent-dark);
@@ -785,6 +809,12 @@
         }
         .inline-form {
             display: inline;
+        }
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
         }
         .project-toolbar {
             display: flex;
@@ -914,8 +944,17 @@
 <body>
 <main class="layout">
     <section class="hero">
-        <h1>Blob Store Control Room</h1>
-        <p>Design project-based upload modules for files, images, and video, then run the whole asset pipeline from one place. Set up storage and database connections, manage validation rules, and review generated variants without leaving the dashboard.</p>
+        <div class="hero-top">
+            <div class="hero-copy">
+                <h1>Blob Store Control Room</h1>
+                <p>Design project-based upload modules for files, images, and video, then run the whole asset pipeline from one place. Set up storage and database connections, manage validation rules, and review generated variants without leaving the dashboard.</p>
+            </div>
+            <div class="hero-actions">
+                <form th:action="@{/logout}" method="post" class="inline-form">
+                    <button type="submit" class="button-subtle">Logout</button>
+                </form>
+            </div>
+        </div>
     </section>
 
     <section class="tab-shell">

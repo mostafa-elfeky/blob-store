@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.TestPropertySource;
 
@@ -37,6 +38,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -224,7 +228,8 @@ class BlobStoreApplicationTests {
                 new MockMultipartFile("file", "contract final.pdf", "application/pdf", "pdf-content".getBytes())
         );
 
-        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey()))
+        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey())
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "inline; filename=\"=?UTF-8?Q?contract_final.pdf?=\"; filename*=UTF-8''contract%20final.pdf"));
     }
@@ -244,7 +249,8 @@ class BlobStoreApplicationTests {
                 new MockMultipartFile("file", "عقد نهائي.png", "image/png", createImageBytes())
         );
 
-        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey()))
+        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey())
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "inline; filename=\"=?UTF-8?Q?=D8=B9=D9=82=D8=AF_=D9=86=D9=87=D8=A7=D8=A6=D9=8A.png?=\"; filename*=UTF-8''%D8%B9%D9%82%D8%AF%20%D9%86%D9%87%D8%A7%D8%A6%D9%8A.png"));
     }
@@ -264,7 +270,8 @@ class BlobStoreApplicationTests {
                 new MockMultipartFile("file", "offer.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx-content".getBytes())
         );
 
-        mockMvc.perform(get("/api/files/{fileKey}/metadata", storedFile.getFileKey()))
+        mockMvc.perform(get("/api/files/{fileKey}/metadata", storedFile.getFileKey())
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fileKey").value(storedFile.getFileKey().toString()))
                 .andExpect(jsonPath("$.moduleCode").value("letters"))
@@ -321,6 +328,8 @@ class BlobStoreApplicationTests {
     @Test
     void shouldSaveStorageRootFromSettingsPage() throws Exception {
         mockMvc.perform(post("/admin/storage-settings")
+                        .with(adminUser())
+                        .with(csrf())
                         .param("rootDir", "build/alternate-storage")
                         .param("acknowledgeRisk", "true"))
                 .andExpect(status().is3xxRedirection());
@@ -335,10 +344,58 @@ class BlobStoreApplicationTests {
         String marker = "dashboard-log-marker-" + System.nanoTime();
         logger.info(marker);
 
-        mockMvc.perform(get("/admin"))
+        mockMvc.perform(get("/admin").with(adminUser()))
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("System Logs")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString(marker)));
+    }
+
+    @Test
+    void shouldRequireLoginForAdminDashboard() throws Exception {
+        mockMvc.perform(get("/admin"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void shouldAllowAnonymousDownloadForPublicModule() throws Exception {
+        ModuleForm form = new ModuleForm();
+        form.setCode("public-files");
+        form.setDisplayName("Public Files");
+        form.setProjectId(createProject("public-assets", "Public Assets").getId());
+        form.setType(ModuleType.FILE);
+        form.setPublicAccess(true);
+
+        ModuleEntity module = moduleManagementService.save(form);
+        StoredFileView storedFile = fileStorageService.store(
+                module.getCode(),
+                new MockMultipartFile("file", "public.txt", "text/plain", "hello".getBytes())
+        );
+
+        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRequireAuthenticationForPrivateFileDownload() throws Exception {
+        ModuleForm form = new ModuleForm();
+        form.setCode("private-files");
+        form.setDisplayName("Private Files");
+        form.setProjectId(createProject("private-assets", "Private Assets").getId());
+        form.setType(ModuleType.FILE);
+        form.setPublicAccess(false);
+
+        ModuleEntity module = moduleManagementService.save(form);
+        StoredFileView storedFile = fileStorageService.store(
+                module.getCode(),
+                new MockMultipartFile("file", "private.txt", "text/plain", "secret".getBytes())
+        );
+
+        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/files/{fileKey}", storedFile.getFileKey())
+                        .with(jwt()))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -384,7 +441,9 @@ class BlobStoreApplicationTests {
         assertThat(fileStorageService.countFilesMarkedDeleted()).isEqualTo(deletedFileCountBeforeDelete + 1);
         assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
 
-        mockMvc.perform(post("/admin/files/purge-deleted"))
+        mockMvc.perform(post("/admin/files/purge-deleted")
+                        .with(adminUser())
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(fileStorageService.countFilesMarkedDeleted()).isZero();
@@ -463,6 +522,10 @@ class BlobStoreApplicationTests {
 
     private Path moduleRoot(ModuleEntity module) {
         return Path.of("build/test-storage").resolve(module.getStorageFolder());
+    }
+
+    private SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor adminUser() {
+        return user("admin").roles("ADMIN");
     }
 
     private byte[] createImageBytes() throws Exception {

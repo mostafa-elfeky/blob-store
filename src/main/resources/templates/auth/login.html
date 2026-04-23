@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blob Store Login</title>
+    <style>
+        :root {
+            --bg: #f4efe5;
+            --panel: rgba(255, 252, 246, 0.96);
+            --ink: #1f2933;
+            --muted: #6b7280;
+            --line: rgba(127, 59, 8, 0.14);
+            --accent: #bd6f38;
+            --accent-dark: #7f3b08;
+            --danger: #b42318;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            color: var(--ink);
+            background:
+                    radial-gradient(circle at top left, rgba(189, 111, 56, 0.18), transparent 28%),
+                    radial-gradient(circle at bottom right, rgba(127, 59, 8, 0.12), transparent 24%),
+                    linear-gradient(180deg, #fbf6ef 0%, #f4ecdf 100%);
+            padding: 24px;
+        }
+        .login-shell {
+            width: min(460px, 100%);
+            display: grid;
+            gap: 18px;
+            padding: 28px;
+            border-radius: 28px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            box-shadow: 0 24px 60px rgba(68, 43, 24, 0.12);
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 6vw, 2.8rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        form {
+            display: grid;
+            gap: 14px;
+        }
+        label {
+            display: grid;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(127, 59, 8, 0.18);
+            background: white;
+            font: inherit;
+        }
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .message {
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+        }
+        .message-error {
+            background: rgba(180, 35, 24, 0.08);
+            color: var(--danger);
+            border: 1px solid rgba(180, 35, 24, 0.14);
+        }
+        .message-ok {
+            background: rgba(37, 100, 61, 0.08);
+            color: #25643d;
+            border: 1px solid rgba(37, 100, 61, 0.14);
+        }
+    </style>
+</head>
+<body>
+<main class="login-shell">
+    <div>
+        <h1>Admin Login</h1>
+        <p>Sign in to manage projects, modules, storage, and system configuration.</p>
+    </div>
+
+    <div class="message message-error" th:if="${param.error}">
+        Invalid username or password.
+    </div>
+    <div class="message message-ok" th:if="${param.logout}">
+        You have been signed out.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <label>
+            Username
+            <input type="text" name="username" autocomplete="username" required>
+        </label>
+        <label>
+            Password
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Sign In</button>
+    </form>
+</main>
+</body>
+</html>

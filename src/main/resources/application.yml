@@ -17,6 +17,10 @@ spring:
       max-request-size: 250MB
 
 blobstore:
+  admin:
+    config-file: ./data/blob-store/admin-user.properties
+  api-security:
+    jwt-secret: ${BLOBSTORE_API_JWT_SECRET:change-this-api-jwt-secret-change-this-api-jwt-secret}
   database:
     config-file: ./data/blob-store/database-connection.properties
     bootstrap-database-path: ./data/blob-store/bootstrap/blob-store
