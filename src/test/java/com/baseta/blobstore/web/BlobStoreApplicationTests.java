@@ -297,7 +297,8 @@ class BlobStoreApplicationTests {
     @Test
     void shouldSaveStorageRootFromSettingsPage() throws Exception {
         mockMvc.perform(post("/admin/storage-settings")
-                        .param("rootDir", "build/alternate-storage"))
+                        .param("rootDir", "build/alternate-storage")
+                        .param("acknowledgeRisk", "true"))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(storageSettingsService.currentStatus().isRestartRequired()).isTrue();

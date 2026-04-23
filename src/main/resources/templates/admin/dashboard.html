@@ -561,6 +561,19 @@
             display: grid;
             gap: 16px;
         }
+        .settings-warning {
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+            border: 1px solid rgba(180, 83, 9, 0.16);
+            border-radius: 18px;
+            background: rgba(180, 83, 9, 0.08);
+        }
+        .settings-warning p {
+            margin: 0;
+            color: #9a3412;
+            font-size: 0.92rem;
+        }
         .settings-block h3 {
             margin: 0;
             font-size: 1rem;
@@ -902,7 +915,7 @@
 <main class="layout">
     <section class="hero">
         <h1>Blob Store Control Room</h1>
-        <p>Create upload modules for generic files, images, or videos. Configure the backing database from the admin UI, then manage uploads and generated image variants from the same dashboard.</p>
+        <p>Design project-based upload modules for files, images, and video, then run the whole asset pipeline from one place. Set up storage and database connections, manage validation rules, and review generated variants without leaving the dashboard.</p>
     </section>
 
     <section class="tab-shell">
@@ -1257,13 +1270,19 @@
                             <h3>Storage Root</h3>
                             <p class="hint" style="margin: 0;">Choose where Blob Store keeps module folders and generated assets on disk.</p>
                         </div>
-                        <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell">
+                        <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell" id="storageSettingsForm">
+                            <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
                             <div class="row">
                                 <label style="grid-column: 1 / -1;">
                                     Storage Root
                                     <input type="text" th:field="*{rootDir}" placeholder="Storage Root">
                                     <span class="error" th:if="${#fields.hasErrors('rootDir')}" th:errors="*{rootDir}"></span>
                                 </label>
+                            </div>
+                            <div class="settings-warning">
+                                <strong>Use caution before changing this path.</strong>
+                                <p>The new location is only applied after restart.</p>
+                                <p>Existing files are not moved automatically. If you point to a different empty folder after restart, existing uploads will not be available there until you migrate them.</p>
                             </div>
                             <div class="media-scope-card">
                                 <div class="media-scope-copy">
@@ -1276,6 +1295,10 @@
                                     <span class="media-meta-pill mono" th:if="${storageSettingsStatus.savedRootDir != null}" th:text="'Saved: ' + ${storageSettingsStatus.savedRootDir}"></span>
                                 </div>
                             </div>
+                            <label class="checkbox">
+                                <input type="checkbox" th:field="*{acknowledgeRisk}">
+                                I understand this does not move existing files automatically and takes effect after restart
+                            </label>
                             <div class="actions">
                                 <button type="submit">Save Storage Root</button>
                             </div>
@@ -1458,6 +1481,8 @@
     const projectDialog = document.getElementById("projectDialog");
     const projectDialogOpenButtons = document.querySelectorAll("[data-open-project-dialog]");
     const projectDialogCloseButtons = document.querySelectorAll("[data-close-project-dialog]");
+    const storageSettingsForm = document.getElementById("storageSettingsForm");
+    const storageRootInput = document.getElementById("rootDir");
     const vendorPorts = {
         POSTGRESQL: 5432,
         MYSQL: 3306,
@@ -1580,6 +1605,19 @@
     projectDialogCloseButtons.forEach(button => {
         button.addEventListener("click", closeProjectDialog);
     });
+
+    if (storageSettingsForm && storageRootInput) {
+        const activeStorageRoot = /*[[${storageSettingsStatus.activeRootDir}]]*/ "";
+        storageSettingsForm.addEventListener("submit", event => {
+            const nextRoot = storageRootInput.value.trim();
+            if (nextRoot && nextRoot !== activeStorageRoot) {
+                const confirmed = window.confirm("Change the storage root after restart? Existing files are not moved automatically.");
+                if (!confirmed) {
+                    event.preventDefault();
+                }
+            }
+        });
+    }
 
     function setActiveTab(tabName) {
         tabButtons.forEach(button => {

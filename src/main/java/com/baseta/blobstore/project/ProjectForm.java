@@ -1,4 +1,4 @@
-package com.baseta.blobstore.storage;
+package com.baseta.blobstore.project;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -9,11 +9,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class StorageSettingsForm {
+public class ProjectForm {
 
     @NotBlank
-    @Size(max = 1000)
-    private String rootDir;
+    @Size(max = 100)
+    private String code;
 
-    private boolean acknowledgeRisk;
+    @NotBlank
+    @Size(max = 150)
+    private String displayName;
 }

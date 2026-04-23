@@ -191,7 +191,12 @@ public class AdminController {
             return renderSettingsErrorState(model);
         }
 
-        storageSettingsService.save(storageSettingsForm);
+        try {
+            storageSettingsService.save(storageSettingsForm);
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("storage.form", exception.getMessage());
+            return renderSettingsErrorState(model);
+        }
         redirectAttributes.addFlashAttribute(
                 "settingsSuccessMessage",
                 "Storage root saved. Restart the application to apply the new location."

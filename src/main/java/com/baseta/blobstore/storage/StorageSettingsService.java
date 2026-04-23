@@ -48,6 +48,17 @@ public class StorageSettingsService {
 
     public void save(StorageSettingsForm form) {
         Path savedRootPath = resolveRootPath(form.getRootDir());
+        boolean changingRoot = !savedRootPath.equals(activeRootPath);
+        if (changingRoot && !form.isAcknowledgeRisk()) {
+            throw new IllegalArgumentException("Confirm the storage root change before saving");
+        }
+        if (!changingRoot && storageSettingsStore.loadRootDir()
+                .map(this::resolveRootPath)
+                .filter(savedPath -> savedPath.equals(savedRootPath))
+                .isPresent()) {
+            log.info("Storage root setting unchanged: '{}'", savedRootPath);
+            return;
+        }
         storageSettingsStore.saveRootDir(savedRootPath.toString());
         log.info("Saved storage root setting '{}'; restart required to apply", savedRootPath);
     }
