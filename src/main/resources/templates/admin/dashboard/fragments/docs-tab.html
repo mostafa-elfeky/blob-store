@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel is-active" data-tab-panel="docs" th:fragment="content">
+    <div class="panel-stack">
+        <section class="panel">
+            <div class="docs-hero-card">
+                <span class="docs-eyebrow">Quick Start</span>
+                <div class="docs-section-grid">
+                    <h2>Blob Store is the control layer for structured uploads and retrieval.</h2>
+                    <p>Use it to define project-based upload modules, enforce validation rules, generate image variants, and expose file APIs to other systems. The rest of the dashboard handles configuration, operations, and observability; this tab gives you the fast overview.</p>
+                </div>
+                <div class="docs-highlight-grid">
+                    <article class="docs-highlight-card">
+                        <strong>Organize by project</strong>
+                        <span>Create a project once, then group related modules under it so storage paths and admin structure stay predictable.</span>
+                    </article>
+                    <article class="docs-highlight-card">
+                        <strong>Control file behavior</strong>
+                        <span>Each module defines allowed media types, size limits, privacy rules, and image processing requirements.</span>
+                    </article>
+                    <article class="docs-highlight-card">
+                        <strong>Serve other apps</strong>
+                        <span>External systems upload and retrieve files through the API layer instead of using the admin UI directly.</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Security Notes</h2>
+            <p class="hint">Admin access and API access are intentionally separated so operational access does not get mixed with application integration access.</p>
+            <div class="docs-section-grid">
+                <div class="docs-point">
+                    <strong>Admin UI</strong>
+                    <span>The dashboard uses form login with a local admin account loaded from <span class="mono">blobstore.admin.config-file</span>. This is the right place for internal operations access, not for application-to-application traffic.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>API authentication</strong>
+                    <span>Application-facing APIs use JWT validation and can optionally enable Basic Auth for tightly controlled backend integrations. Configure this under Settings in the API Security section.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>Public vs private files</strong>
+                    <span>Modules marked with Public Retrieval Allowed can be retrieved anonymously. Private modules require an authenticated token for file download and metadata access.</span>
+                </div>
+                <div class="docs-point">
+                    <strong>Recommended token scopes</strong>
+                    <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Basic Auth should be reserved for backend integrations over trusted transport only.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>API Reference</h2>
+            <p class="hint">Use these endpoints from other services. Configuration happens in the dashboard; upload and retrieval flows happen through the REST API.</p>
+            <table>
+                <tbody>
+                <tr>
+                    <th>Upload</th>
+                    <td>
+                        <div class="api-row">
+                            <span class="mono">POST /api/files/{moduleCode}</span>
+                            <button
+                                    type="button"
+                                    class="button-secondary copy-curl-button"
+                                    data-curl-template="curl -X POST &quot;__BASE_URL__/api/files/{moduleCode}&quot; -H &quot;Authorization: Bearer __TOKEN__&quot; -F &quot;file=@/path/to/file&quot;">
+                                <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Retrieve</th>
+                    <td>
+                        <div class="api-row">
+                            <span class="mono">GET /api/files/{fileKey}</span>
+                            <button
+                                    type="button"
+                                    class="button-secondary copy-curl-button"
+                                    data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}&quot; --output downloaded-file">
+                                <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Image Variant</th>
+                    <td>
+                        <div class="api-row">
+                            <span class="mono">GET /api/files/{fileKey}?type=thumb</span>
+                            <button
+                                    type="button"
+                                    class="button-secondary copy-curl-button"
+                                    data-curl-template="curl &quot;__BASE_URL__/api/files/{fileKey}?type=thumb&quot; --output image-thumb">
+                                <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Modules</th>
+                    <td>
+                        <div class="api-row">
+                            <span class="mono">GET /api/modules</span>
+                            <button
+                                    type="button"
+                                    class="button-secondary copy-curl-button"
+                                    data-curl-template="curl &quot;__BASE_URL__/api/modules&quot; -H &quot;Authorization: Bearer __TOKEN__&quot;">
+                                <span class="copy-curl-button-label"><span class="copy-curl-icon" aria-hidden="true">⧉</span><span>curl</span></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Payload</th>
+                    <td class="mono">multipart/form-data with field name "file"; image modules can also enforce an exact original size configured as WIDTHxHEIGHT</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="api-note">
+                Retrieval can stay anonymous only when a module is marked public. Uploads always require a bearer token with the appropriate scope, and private file reads require authenticated access.
+            </div>
+        </section>
+    </div>
+</section>
+</body>
+</html>

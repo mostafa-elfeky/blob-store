@@ -1,0 +1,45 @@
+services:
+  blob-store:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "4817:4817"
+    environment:
+      BLOBSTORE_ADMIN_USERNAME: admin
+      BLOBSTORE_ADMIN_PASSWORD: admin123
+      BLOBSTORE_DB_VENDOR: POSTGRESQL
+      BLOBSTORE_DB_HOST: postgres
+      BLOBSTORE_DB_PORT: 5432
+      BLOBSTORE_DB_NAME: blobstore
+      BLOBSTORE_DB_SCHEMA: blob_store
+      BLOBSTORE_DB_USERNAME: blobstore
+      BLOBSTORE_DB_PASSWORD: blobstore
+      BLOBSTORE_API_JWT_SHARED_SECRET: change-this-api-jwt-secret-change-this-api-jwt-secret
+      BLOBSTORE_API_BASIC_AUTH_ENABLED: "true"
+      BLOBSTORE_API_BASIC_USERNAME: integration
+      BLOBSTORE_API_BASIC_PASSWORD: integration123
+    volumes:
+      - blob-store-data:/var/lib/blob-store
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: blobstore
+      POSTGRES_USER: blobstore
+      POSTGRES_PASSWORD: blobstore
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blobstore -d blobstore"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  blob-store-data:
+  postgres-data:

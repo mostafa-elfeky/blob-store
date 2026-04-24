@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel" data-tab-panel="uploads" th:fragment="content" th:if="${databaseStatus.databaseReady}">
+    <div class="panel">
+        <h2>Recent Uploads</h2>
+        <p class="hint">Inspect the latest uploaded assets and open them directly by retrieval name.</p>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Module</th>
+                    <th>Open</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${recentFiles.isEmpty()}">
+                    <td colspan="3">No uploads yet.</td>
+                </tr>
+                <tr th:each="file : ${recentFiles}">
+                    <td>
+                        <div th:text="${file.originalName}"></div>
+                        <div class="mono" th:text="${file.retrievalName}"></div>
+                    </td>
+                    <td class="mono" th:text="${file.moduleCode}"></td>
+                    <td>
+                        <a class="link mono" th:href="@{'/api/files/' + ${file.fileKey}}" target="_blank" th:text="${file.fileKey}"></a>
+                        <div class="mono" th:text="'/api/files/' + ${file.fileKey} + '?type=thumb'"></div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>

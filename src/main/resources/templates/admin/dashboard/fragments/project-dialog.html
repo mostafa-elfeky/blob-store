@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<dialog id="projectDialog" class="modal" th:fragment="content">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3>Create Project</h3>
+                <p>Projects group modules. Keep the code short and stable because it becomes part of the storage path.</p>
+            </div>
+            <button type="button" class="button-secondary modal-close" data-close-project-dialog>Close</button>
+        </div>
+        <form th:action="@{/admin/projects}" method="post" th:object="${projectForm}">
+            <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+            <label>
+                Project Code
+                <input type="text" th:field="*{code}" placeholder="customer-assets">
+                <span class="error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></span>
+            </label>
+            <label>
+                Display Name
+                <input type="text" th:field="*{displayName}" placeholder="Customer Assets">
+                <span class="error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+            </label>
+            <div class="actions">
+                <button type="submit">Create Project</button>
+                <button type="button" class="button-secondary" data-close-project-dialog>Cancel</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+</body>
+</html>

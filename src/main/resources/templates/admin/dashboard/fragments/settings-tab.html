@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel" data-tab-panel="settings" th:fragment="content">
+    <div class="panel-stack">
+        <section class="panel settings-panel">
+            <h2>Settings</h2>
+            <p class="hint">Manage storage settings and, when the database is ready, run cleanup actions for items that were already soft-deleted from the admin UI.</p>
+            <div th:if="${settingsSuccessMessage}" class="success" th:text="${settingsSuccessMessage}"></div>
+            <div th:if="${apiSecuritySuccessMessage}" class="success" th:text="${apiSecuritySuccessMessage}"></div>
+            <section class="settings-block">
+                <div class="settings-header">
+                    <h3>Storage Root</h3>
+                    <p class="hint" style="margin: 0;">Set where files are stored on disk.</p>
+                </div>
+                <div class="settings-split">
+                    <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell" id="storageSettingsForm">
+                        <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                        <div class="row">
+                            <label style="grid-column: 1 / -1;">
+                                Storage Root
+                                <input type="text" th:field="*{rootDir}" placeholder="Storage Root">
+                                <span class="error" th:if="${#fields.hasErrors('rootDir')}" th:errors="*{rootDir}"></span>
+                            </label>
+                        </div>
+                        <div class="settings-warning">
+                            <strong>Changes apply after restart.</strong>
+                            <p>Files are not moved automatically.</p>
+                        </div>
+                        <label class="checkbox">
+                            <input type="checkbox" th:field="*{acknowledgeRisk}">
+                            I understand files are not moved automatically
+                        </label>
+                        <div class="actions">
+                            <button type="submit">Save Storage Root</button>
+                        </div>
+                    </form>
+                    <aside class="settings-status-card">
+                        <h4>Path Status</h4>
+                        <dl class="settings-status-list">
+                            <div class="settings-status-item">
+                                <dt th:text="${storageSettingsStatus.restartRequired ? 'Active path' : 'Path'}"></dt>
+                                <dd class="mono" th:text="${storageSettingsStatus.activeRootDir}"></dd>
+                            </div>
+                            <div class="settings-status-item" th:if="${storageSettingsStatus.restartRequired}">
+                                <dt>Saved path</dt>
+                                <dd class="mono" id="storageSavedPathValue" th:text="${storageSettingsStatus.savedRootDir}"></dd>
+                            </div>
+                            <div class="settings-status-item">
+                                <dt>Activation</dt>
+                                <dd id="storageActivationState" th:text="${storageSettingsStatus.restartRequired} ? 'Saved root will become active after restart.' : 'Saved root already matches the active path.'"></dd>
+                            </div>
+                        </dl>
+                        <ul class="settings-checklist">
+                            <li>Move existing files yourself before switching the root if you need old uploads to remain available.</li>
+                            <li>Use an absolute path so operations stay predictable across environments.</li>
+                            <li>Restart only after the destination directory is ready and writable by the application.</li>
+                        </ul>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="settings-block api-security-block">
+                <div class="settings-header">
+                    <h3>API Security</h3>
+                    <p class="hint" style="margin: 0;">Set API auth. Use JWT by default and Basic Auth only for backend integrations.</p>
+                </div>
+                <form th:action="@{/admin/api-security}" method="post" th:object="${apiSecurityForm}" class="settings-form-shell" id="apiSecurityForm">
+                    <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                    <div class="api-security-layout">
+                        <section class="security-card">
+                            <div class="security-card-header">
+                                <h4>JWT Validation</h4>
+                                <p>Recommended for apps and services.</p>
+                            </div>
+                            <p class="security-inline-list">Scopes: <span class="security-inline-pill mono">modules.read</span>, <span class="security-inline-pill mono">modules.write</span>, <span class="security-inline-pill mono">files.write</span></p>
+                            <div class="security-row">
+                                <label class="security-field-full">
+                                    JWT Validation Mode
+                                    <div class="security-mode-group" id="apiJwtValidationModeGroup">
+                                        <label class="security-mode-option" th:each="mode : ${apiJwtValidationModes}">
+                                            <input type="radio" th:field="*{jwtValidationMode}" th:value="${mode}">
+                                            <span th:text="${#strings.replace(mode.toString(), '_', ' ')}"></span>
+                                        </label>
+                                    </div>
+                                    <span class="error" th:if="${#fields.hasErrors('jwtValidationMode')}" th:errors="*{jwtValidationMode}"></span>
+                                </label>
+                            </div>
+                            <div class="security-row">
+                                <label>
+                                    Expected Audience
+                                    <input type="text" th:field="*{jwtAudience}" placeholder="blobstore-api">
+                                    <span class="hint">Optional.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('jwtAudience')}" th:errors="*{jwtAudience}"></span>
+                                </label>
+                                <label>
+                                    Expected Issuer
+                                    <input type="text" th:field="*{jwtIssuer}" placeholder="https://issuer.example.com">
+                                    <span class="hint">Optional.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('jwtIssuer')}" th:errors="*{jwtIssuer}"></span>
+                                </label>
+                            </div>
+                            <div class="security-row">
+                                <label class="conditional-group security-field-full" id="apiJwtSharedSecretField">
+                                    Shared JWT Secret
+                                    <input type="password" th:field="*{jwtSharedSecret}" placeholder="Shared JWT Secret" autocomplete="new-password">
+                                    <span class="hint">Used for HS256 tokens.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('jwtSharedSecret')}" th:errors="*{jwtSharedSecret}"></span>
+                                </label>
+                            </div>
+                            <div class="security-row">
+                                <label class="conditional-group security-field-full" id="apiJwtJwkSetUriField">
+                                    JWK Set URI
+                                    <input type="text" th:field="*{jwtJwkSetUri}" placeholder="https://issuer.example.com/.well-known/jwks.json">
+                                    <span class="hint">Used for JWK-based validation.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('jwtJwkSetUri')}" th:errors="*{jwtJwkSetUri}"></span>
+                                </label>
+                            </div>
+                        </section>
+                        <section class="security-card security-card-full">
+                            <div class="security-card-header">
+                                <h4>Basic Auth</h4>
+                                <p>Use only for trusted backend integrations.</p>
+                            </div>
+                            <div class="security-toggle-card">
+                                <label class="checkbox">
+                                    <input type="checkbox" th:field="*{basicAuthEnabled}" id="apiBasicAuthEnabled">
+                                    Enable Basic Auth
+                                </label>
+                            </div>
+                            <div class="security-row conditional-group" id="apiBasicAuthFields">
+                                <label>
+                                    Username
+                                    <input type="text" th:field="*{basicUsername}" placeholder="integration-client" autocomplete="off">
+                                    <span class="hint">Use a service account.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('basicUsername')}" th:errors="*{basicUsername}"></span>
+                                </label>
+                                <label>
+                                    Password
+                                    <input type="password" th:field="*{basicPassword}" placeholder="Integration Password" autocomplete="new-password">
+                                    <span class="hint">Applied after restart.</span>
+                                    <span class="error" th:if="${#fields.hasErrors('basicPassword')}" th:errors="*{basicPassword}"></span>
+                                </label>
+                            </div>
+                        </section>
+                        <section class="security-status-card">
+                            <h4>Active Settings</h4>
+                            <dl class="security-status-list compact-status-list">
+                                <div class="security-status-item">
+                                    <dt>Active JWT mode</dt>
+                                    <dd th:text="${#strings.replace(apiSecurityStatus.activeJwtValidationMode.toString(), '_', ' ')}"></dd>
+                                </div>
+                                <div class="security-status-item">
+                                    <dt>Issuer</dt>
+                                    <dd class="mono" th:text="${apiSecurityStatus.activeJwtIssuer != null ? apiSecurityStatus.activeJwtIssuer : 'Any issuer'}"></dd>
+                                </div>
+                                <div class="security-status-item">
+                                    <dt>Audience</dt>
+                                    <dd class="mono" th:text="${apiSecurityStatus.activeJwtAudience != null ? apiSecurityStatus.activeJwtAudience : 'Any audience'}"></dd>
+                                </div>
+                                <div class="security-status-item">
+                                    <dt>Basic Auth</dt>
+                                    <dd th:text="${apiSecurityStatus.activeBasicAuthEnabled ? 'Enabled for ' + apiSecurityStatus.activeBasicUsername : 'Disabled'}"></dd>
+                                </div>
+                                <div class="security-status-item">
+                                    <dt>Saved JWT mode</dt>
+                                    <dd th:text="${apiSecurityStatus.savedJwtValidationMode != null ? #strings.replace(apiSecurityStatus.savedJwtValidationMode.toString(), '_', ' ') : #strings.replace(apiSecurityStatus.activeJwtValidationMode.toString(), '_', ' ')}"></dd>
+                                </div>
+                                <div class="security-status-item">
+                                    <dt>JWT scopes</dt>
+                                    <dd><span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, <span class="mono">blobstore.files.write</span></dd>
+                                </div>
+                            </dl>
+                            <div class="security-pending-note" th:if="${apiSecurityStatus.restartRequired}">
+                                A saved security configuration is waiting for restart before it becomes active.
+                            </div>
+                        </section>
+                    </div>
+                    <div class="actions">
+                        <button type="submit">Save API Security</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="settings-block" th:classappend="${databaseStatus.databaseReady and deletedFileCount > 0} ? ' danger-zone' : ''">
+                <div class="settings-header">
+                    <h3>Housekeeping</h3>
+                    <p class="hint" style="margin: 0;" th:text="${databaseStatus.databaseReady} ? 'Permanent cleanup removes deleted file records and stored originals that still belong to deleted modules.' : 'Connect the database before running permanent cleanup actions.'"></p>
+                </div>
+                <form th:if="${databaseStatus.databaseReady}" th:action="@{/admin/files/purge-deleted}" method="post" onsubmit="return window.confirm('Permanently delete files from deleted modules? This cannot be undone.');">
+                    <div class="actions">
+                        <button type="submit" class="button-danger">Permanently Delete Deleted Files</button>
+                    </div>
+                </form>
+            </section>
+        </section>
+    </div>
+</section>
+</body>
+</html>

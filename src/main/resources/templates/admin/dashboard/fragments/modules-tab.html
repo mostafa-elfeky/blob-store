@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel" data-tab-panel="modules" th:fragment="content" th:if="${databaseStatus.databaseReady}">
+    <div class="panel-stack">
+        <section class="panel">
+            <h2 th:text="${moduleForm.id} != null ? 'Edit Module' : 'Create Module'"></h2>
+            <p class="hint" th:if="${moduleForm.id} == null">A default project is selected automatically. You can keep it or create another project if needed. The storage folder is created as <span class="mono">project-code/module-code</span>.</p>
+            <p class="hint" th:if="${moduleForm.id} != null">Editing keeps the current module code and type. New image sizes are generated from originals and removed sizes have their folders deleted.</p>
+            <div th:if="${successMessage}" class="success" th:text="${successMessage}"></div>
+            <div th:if="${projectSuccessMessage}" class="success" th:text="${projectSuccessMessage}"></div>
+            <form th:action="@{/admin/modules}" method="post" th:object="${moduleForm}">
+                <input type="hidden" th:field="*{id}">
+                <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                <div class="module-project-row">
+                    <label>
+                        Project
+                        <select
+                                th:field="*{projectId}"
+                                th:attr="disabled=${moduleForm.id != null and moduleForm.projectId != null} ? 'disabled' : null">
+                            <option value="">Select project</option>
+                            <option th:each="project : ${projects}" th:value="${project.id}" th:text="${project.displayName + ' · ' + project.code}"></option>
+                        </select>
+                        <input type="hidden" th:if="${moduleForm.id != null and moduleForm.projectId != null}" th:field="*{projectId}">
+                        <span class="error" th:if="${#fields.hasErrors('projectId')}" th:errors="*{projectId}"></span>
+                    </label>
+                    <button type="button" class="button-ghost" data-open-project-dialog>Create Project</button>
+                </div>
+                <div class="row">
+                    <label>
+                        Module Code
+                        <input type="text" th:field="*{code}" placeholder="Module Code">
+                        <span class="error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></span>
+                    </label>
+                    <label>
+                        Display Name
+                        <input type="text" th:field="*{displayName}" placeholder="Display Name">
+                        <span class="error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label>
+                        Module Type
+                        <select th:field="*{type}" id="moduleType">
+                            <option value="">Select type</option>
+                            <option th:each="type : ${moduleTypes}" th:value="${type}" th:text="${type}"></option>
+                        </select>
+                        <span class="error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></span>
+                    </label>
+                    <label>
+                        Max File Size (MB)
+                        <input type="number" min="1" th:field="*{maxFileSizeMb}" placeholder="Max File Size (MB)">
+                        <span class="error" th:if="${#fields.hasErrors('maxFileSizeMb')}" th:errors="*{maxFileSizeMb}"></span>
+                    </label>
+                </div>
+                <div class="row conditional-group" id="imageFields">
+                    <label>
+                        Original Size
+                        <input type="text" th:field="*{originalImageSizeDefinition}" placeholder="1200x630">
+                        <span class="hint">Optional exact size for the uploaded original image. Use <span class="mono">WIDTHxHEIGHT</span>.</span>
+                        <span class="error" th:if="${#fields.hasErrors('originalImageSizeDefinition')}" th:errors="*{originalImageSizeDefinition}"></span>
+                    </label>
+                    <label style="grid-column: 1 / -1;">
+                        Image Sizes
+                        <textarea th:field="*{imageSizeDefinitions}" placeholder="thumb=150x150&#10;medium=800x600"></textarea>
+                        <span class="hint">Add one size per line in the form <span class="mono">CODE=WIDTHxHEIGHT</span>.</span>
+                        <span class="error" th:if="${#fields.hasErrors('imageSizeDefinitions')}" th:errors="*{imageSizeDefinitions}"></span>
+                    </label>
+                </div>
+                <div class="row conditional-group" id="videoFields">
+                    <label>
+                        Video Type
+                        <select th:field="*{videoType}">
+                            <option value="">Select video type</option>
+                            <option th:each="videoType : ${videoTypes}" th:value="${videoType}" th:text="${videoType}"></option>
+                        </select>
+                    </label>
+                    <label>
+                        Max Video Duration (seconds)
+                        <input type="number" min="1" th:field="*{maxVideoDurationSeconds}" placeholder="Max Video Duration (seconds)">
+                    </label>
+                </div>
+                <details class="form-disclosure" th:attr="open=${#fields.hasErrors('selectedMediaTypes') or #fields.hasErrors('customMediaTypes')} ? 'open' : null">
+                    <summary>
+                        <span>Upload Rules</span>
+                    </summary>
+                    <div class="form-disclosure-body">
+                        <p class="form-disclosure-copy">Keep this collapsed unless you need to restrict uploads to specific MIME types for this module.</p>
+                        <div class="media-scope-card">
+                            <div class="media-scope-copy">
+                                <span class="media-scope-eyebrow" id="moduleMediaTypeScopeEyebrow">Upload scope</span>
+                                <strong id="moduleMediaTypeScopeTitle">Choose a module type to preview its allowed media families</strong>
+                                <span class="media-scope-description" id="moduleMediaTypeScopeDescription">File modules can use any supported media families. Image and video modules are limited to their own families.</span>
+                            </div>
+                            <div class="media-scope-meta">
+                                <span class="media-meta-pill">Visible presets: <span class="mono" id="moduleMediaTypeVisibleCountValue">0</span></span>
+                                <span class="media-meta-pill">Allowed family: <span class="mono" id="moduleMediaTypeScopeFamilyValue">all</span></span>
+                            </div>
+                        </div>
+                        <div class="media-selector-card">
+                            <div class="media-selector-header">
+                                <span class="field-title">Preset Media Types</span>
+                                <p>Select preset MIME types that this module is allowed to accept.</p>
+                            </div>
+                            <div class="media-type-toolbar">
+                                <span class="media-toolbar-pill">Presets react to module type</span>
+                                <span class="media-toolbar-pill">Leave all unchecked to allow all supported types</span>
+                            </div>
+                            <div class="media-type-options" id="moduleMediaTypeOptions">
+                                <label class="media-type-chip" th:each="mediaType : ${mediaTypeOptions}" th:attr="data-module-media-group=${#strings.substringBefore(mediaType, '/')}">
+                                    <input type="checkbox" th:field="*{selectedMediaTypes}" th:value="${mediaType}">
+                                    <span class="mono" th:text="${mediaType}"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="media-custom-card">
+                            <div class="media-custom-header">
+                                <span class="field-title">Custom MIME Types</span>
+                                <p>Add one value per line for vendor-specific rules or wildcard entries.</p>
+                            </div>
+                            <textarea th:field="*{customMediaTypes}" placeholder="Custom MIME Types"></textarea>
+                            <span class="error" th:if="${#fields.hasErrors('customMediaTypes')}" th:errors="*{customMediaTypes}"></span>
+                        </div>
+                    </div>
+                </details>
+                <div class="row">
+                    <label class="checkbox">
+                        <input type="checkbox" th:field="*{publicAccess}">
+                        Public Retrieval Allowed
+                    </label>
+                </div>
+                <div class="actions">
+                    <button type="submit" th:text="${moduleForm.id} != null ? 'Save Changes' : 'Create Module'"></button>
+                    <a class="button-secondary" th:if="${moduleForm.id} != null" th:href="@{/admin#modules}">Cancel</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Configured Modules</h2>
+            <p class="hint">Review all module definitions, their owning project, storage folders, and current limits in one place.</p>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Folder</th>
+                        <th>Limits</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${modules.isEmpty()}">
+                        <td colspan="6">No modules created yet.</td>
+                    </tr>
+                    <tr th:each="module : ${modules}">
+                        <td>
+                            <div th:text="${module.projectDisplayName ?: 'Unassigned'}"></div>
+                            <div class="mono" th:if="${module.projectCode != null}" th:text="${module.projectCode}"></div>
+                        </td>
+                        <td>
+                            <div th:text="${module.displayName}"></div>
+                            <div class="mono" th:text="${module.code}"></div>
+                        </td>
+                        <td>
+                            <span class="pill" th:text="${module.type}"></span>
+                            <div th:if="${module.videoType != null}" class="mono" th:text="${module.videoType}"></div>
+                        </td>
+                        <td class="mono" th:text="${module.storageFolder}"></td>
+                        <td>
+                            <div th:if="${module.maxFileSizeMb != null}" th:text="'Size: ' + ${module.maxFileSizeMb} + ' MB'"></div>
+                            <div th:if="${!module.imageSizes.isEmpty()}" th:each="imageSize : ${module.imageSizes}" th:text="'Image: ' + ${imageSize.code} + ' = ' + ${imageSize.width} + 'x' + ${imageSize.height}"></div>
+                            <div th:if="${!module.supportedMediaTypes.isEmpty()}">
+                                <span>Media:</span>
+                                <span class="mono" th:each="mediaType, stat : ${module.supportedMediaTypes}" th:text="${stat.first ? mediaType : ', ' + mediaType}"></span>
+                            </div>
+                            <div th:if="${module.supportedMediaTypes.isEmpty()}">Media: All supported</div>
+                            <div th:if="${module.maxVideoDurationSeconds != null}" th:text="'Video: ' + ${module.maxVideoDurationSeconds} + ' sec'"></div>
+                            <div th:text="${module.publicAccess} ? 'Public access' : 'Private access'"></div>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a class="button-secondary" th:href="@{'/admin?editModuleId=' + ${module.id} + '#modules'}">Edit</a>
+                                <form class="inline-form" th:action="@{/admin/modules/{id}/delete(id=${module.id})}" method="post">
+                                    <button type="submit" class="button-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+</body>
+</html>

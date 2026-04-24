@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel" data-tab-panel="logs" th:fragment="content">
+    <div class="panel">
+        <h2>System Logs</h2>
+        <p class="hint">Recent application events captured in memory for quick troubleshooting from the admin dashboard.</p>
+        <div class="log-console">
+            <div class="log-console-header">
+                <p>Newest entries appear first. The dashboard keeps a rolling in-memory buffer of recent events.</p>
+                <span class="pill" th:text="'Entries: ' + ${systemLogs.size()}"></span>
+            </div>
+            <div class="log-list" th:if="${!systemLogs.isEmpty()}">
+                <article class="log-entry" th:each="entry : ${systemLogs}">
+                    <div class="log-entry-top">
+                        <span class="log-level" th:classappend="' log-level-' + ${entry.level}" th:text="${entry.level}"></span>
+                        <span class="log-timestamp mono" th:text="${entry.timestamp}"></span>
+                        <span class="log-logger mono" th:text="${entry.logger}"></span>
+                    </div>
+                    <p class="log-message mono" th:text="${entry.message}"></p>
+                </article>
+            </div>
+            <div class="log-empty" th:if="${systemLogs.isEmpty()}">
+                No log entries captured yet.
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

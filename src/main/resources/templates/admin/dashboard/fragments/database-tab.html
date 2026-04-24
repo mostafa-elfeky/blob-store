@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="tab-panel" data-tab-panel="database" th:fragment="content">
+    <div class="panel">
+        <div class="database-shell">
+            <div class="database-overview">
+                <div class="database-intro">
+                    <span class="database-kicker">Database Control</span>
+                    <div class="database-title-row">
+                        <h2>Database Connection</h2>
+                        <span class="database-badge is-live" th:text="${databaseStatus.databaseReady} ? 'Ready' : 'Setup required'"></span>
+                    </div>
+                    <p class="hint">Configure the metadata database here. Supported vendors are PostgreSQL, SQL Server, MySQL, and Oracle.</p>
+                    <div class="database-badges">
+                        <span class="database-badge" th:text="${databaseStatus.savedConnectionConfigured} ? 'Saved configuration' : 'Unsaved session'"></span>
+                        <span class="database-badge" th:text="'Vendor: ' + ${databaseStatus.vendor}"></span>
+                    </div>
+                </div>
+                <div class="database-status-card">
+                    <div class="database-status-header">
+                        <span class="database-status-label" th:text="${databaseStatus.savedConnectionConfigured} ? 'Active Database' : 'Current Database'"></span>
+                        <strong th:text="${databaseStatus.vendor}"></strong>
+                    </div>
+                    <div class="database-url mono" th:text="${databaseStatus.jdbcUrl}"></div>
+                    <div class="actions database-actions" th:if="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady}">
+                        <button type="button" id="showDatabaseFormButton">Edit Database Settings</button>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${databaseSuccessMessage}" class="success" th:text="${databaseSuccessMessage}"></div>
+            <div th:if="${databaseErrorMessage}" class="warning">
+                <strong th:text="${databaseErrorMessage}"></strong>
+                <span th:if="${databaseErrorDetail}" th:text="${databaseErrorDetail}"></span>
+            </div>
+            <div th:if="${databaseStatus.startupMessage != null and databaseErrorMessage == null}" class="warning">
+                <strong>Not able to connect to this database.</strong>
+                <span th:text="${databaseStatus.startupMessage}"></span>
+            </div>
+            <form
+                    th:object="${databaseForm}"
+                    id="databaseFormPanel"
+                    class="database-form-shell"
+                    th:classappend="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady and !databaseFormOpen} ? ' is-hidden' : ''">
+                <div class="database-form-header">
+                    <h3>Connection Settings</h3>
+                    <p>Test checks the credentials immediately. Save persists the configuration and applies it after the next restart.</p>
+                </div>
+                <div class="row">
+                    <label>
+                        Vendor
+                        <select th:field="*{vendor}" id="databaseVendor">
+                            <option value="">Select database</option>
+                            <option th:each="vendor : ${databaseVendors}" th:value="${vendor}" th:text="${vendor.displayName()}"></option>
+                        </select>
+                        <span class="error" th:if="${#fields.hasErrors('vendor')}" th:errors="*{vendor}"></span>
+                    </label>
+                    <label>
+                        Host
+                        <input type="text" th:field="*{host}" placeholder="Host">
+                        <span class="error" th:if="${#fields.hasErrors('host')}" th:errors="*{host}"></span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label>
+                        Port
+                        <input type="number" min="1" th:field="*{port}" id="databasePort">
+                        <span class="error" th:if="${#fields.hasErrors('port')}" th:errors="*{port}"></span>
+                    </label>
+                    <label>
+                        Database / Service Name
+                        <input type="text" th:field="*{databaseName}" placeholder="Database / Service Name">
+                        <span class="error" th:if="${#fields.hasErrors('databaseName')}" th:errors="*{databaseName}"></span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label>
+                        Schema
+                        <input type="text" th:field="*{schema}" placeholder="Schema">
+                        <span class="error" th:if="${#fields.hasErrors('schema')}" th:errors="*{schema}"></span>
+                    </label>
+                    <label>
+                        Username
+                        <input type="text" th:field="*{username}" placeholder="Username">
+                        <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label style="grid-column: 1 / -1;">
+                        Password
+                        <input type="password" th:field="*{password}" placeholder="Password">
+                        <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+                    </label>
+                </div>
+                <div class="api-note">
+                    Use Test Connection before saving if you are switching vendors, ports, or credentials.
+                </div>
+                <div class="row">
+                    <button type="submit" formaction="/admin/database/test" formmethod="post">Test Connection</button>
+                    <button type="submit" formaction="/admin/database" formmethod="post">Save Database Settings</button>
+                    <button
+                            type="button"
+                            class="button-secondary"
+                            id="cancelDatabaseFormButton"
+                            th:if="${databaseStatus.savedConnectionConfigured and databaseStatus.databaseReady}">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>
