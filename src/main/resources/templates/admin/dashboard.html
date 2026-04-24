@@ -191,6 +191,26 @@
             border: 1px solid var(--line);
             background: #fff;
             font: inherit;
+            color: var(--ink);
+            line-height: 1.4;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+        select {
+            min-height: 50px;
+            padding-right: 44px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image:
+                    linear-gradient(45deg, transparent 50%, rgba(31, 41, 51, 0.72) 50%),
+                    linear-gradient(135deg, rgba(31, 41, 51, 0.72) 50%, transparent 50%),
+                    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 244, 238, 0.98));
+            background-position:
+                    calc(100% - 20px) calc(50% - 3px),
+                    calc(100% - 14px) calc(50% - 3px),
+                    0 0;
+            background-size: 6px 6px, 6px 6px, 100% 100%;
+            background-repeat: no-repeat;
         }
         textarea {
             min-height: 120px;
@@ -568,9 +588,237 @@
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.55);
         }
+        .settings-panel {
+            display: grid;
+            gap: 20px;
+        }
         .settings-form-shell {
             display: grid;
             gap: 16px;
+        }
+        .settings-status-card {
+            display: grid;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.12), transparent 36%),
+                    rgba(255, 251, 246, 0.92);
+        }
+        .settings-status-card h4 {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+        .settings-status-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+        }
+        .settings-status-item {
+            display: grid;
+            gap: 4px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(127, 59, 8, 0.08);
+        }
+        .settings-status-item:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+        .settings-status-item dt {
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .settings-status-item dd {
+            margin: 0;
+            line-height: 1.5;
+        }
+        .settings-status-item code,
+        .settings-status-item .mono {
+            font-size: 0.88rem;
+        }
+        .settings-checklist {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .settings-checklist li {
+            position: relative;
+            padding-left: 22px;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 0.92rem;
+        }
+        .settings-checklist li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.45rem;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(189, 111, 56, 0.28);
+            box-shadow: 0 0 0 4px rgba(189, 111, 56, 0.08);
+        }
+        .settings-split {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+            gap: 18px;
+            align-items: start;
+        }
+        .api-security-layout {
+            display: grid;
+            gap: 20px;
+        }
+        .security-card {
+            display: grid;
+            gap: 14px;
+            padding-top: 4px;
+        }
+        .security-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .security-mode-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .security-mode-option {
+            position: relative;
+            display: flex;
+            min-height: 52px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+            border: 1px solid rgba(127, 59, 8, 0.16);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.78);
+            color: var(--ink);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+        }
+        .security-mode-option input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+        .security-mode-option:has(input:checked) {
+            border-color: rgba(127, 59, 8, 0.4);
+            background: rgba(189, 111, 56, 0.12);
+            color: var(--accent-dark);
+        }
+        .security-field-full {
+            grid-column: 1 / -1;
+        }
+        .security-card-header {
+            display: grid;
+            gap: 4px;
+        }
+        .security-card-header h4 {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+        .security-card-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .security-inline-list {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+        .security-inline-pill {
+            font-weight: 600;
+        }
+        .security-toggle-card {
+            display: grid;
+            gap: 8px;
+        }
+        .security-status-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .security-status-card {
+            display: grid;
+            gap: 10px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(127, 59, 8, 0.14);
+            background:
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.12), transparent 34%),
+                    rgba(255, 250, 244, 0.9);
+        }
+        .security-status-card h4 {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+        .security-status-intro {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .security-status-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+        }
+        .security-status-list.compact-status-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 16px;
+        }
+        .security-status-item {
+            display: grid;
+            gap: 4px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(127, 59, 8, 0.08);
+        }
+        .security-status-list.compact-status-list .security-status-item {
+            grid-template-columns: max-content minmax(0, 1fr);
+            align-items: start;
+            gap: 8px 12px;
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+        .security-status-item:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
+        }
+        .security-status-item dt {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .security-status-item dd {
+            margin: 0;
+            line-height: 1.55;
+        }
+        .security-status-list.compact-status-list .security-status-item dt,
+        .security-status-list.compact-status-list .security-status-item dd {
+            grid-row: 1;
+        }
+        .security-pending-note {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(180, 83, 9, 0.08);
+            border: 1px solid rgba(180, 83, 9, 0.14);
+            color: #9a3412;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
         .settings-warning {
             display: grid;
@@ -588,6 +836,14 @@
         .settings-block h3 {
             margin: 0;
             font-size: 1rem;
+        }
+        .settings-block.api-security-block {
+            padding: 22px;
+            border-radius: 22px;
+            background:
+                    linear-gradient(135deg, rgba(255, 248, 238, 0.94), rgba(255, 243, 228, 0.92)),
+                    radial-gradient(circle at top right, rgba(189, 111, 56, 0.12), transparent 38%);
+            border: 1px solid rgba(189, 111, 56, 0.16);
         }
         .settings-header {
             display: grid;
@@ -978,11 +1234,22 @@
         .danger-zone {
             display: grid;
             gap: 14px;
-            margin-top: 20px;
             padding: 18px;
             border: 1px solid rgba(180, 83, 9, 0.2);
             border-radius: 18px;
             background: rgba(180, 83, 9, 0.06);
+        }
+        .settings-danger-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(180, 83, 9, 0.16);
+            color: #9a3412;
+            font-weight: 700;
         }
         .is-hidden {
             display: none !important;
@@ -994,10 +1261,26 @@
             .database-overview {
                 grid-template-columns: 1fr;
             }
+            .settings-split,
+            .api-security-layout,
+            .security-mode-group,
+            .security-row,
             .media-settings-layout,
             .media-selector-grid,
-            .docs-highlight-grid {
+            .docs-highlight-grid,
+            .security-status-grid {
                 grid-template-columns: 1fr;
+            }
+            .security-status-item {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+            .security-status-list.compact-status-list {
+                grid-template-columns: 1fr;
+            }
+            .security-status-list.compact-status-list .security-status-item dt,
+            .security-status-list.compact-status-list .security-status-item dd {
+                grid-row: auto;
             }
             .module-project-row {
                 grid-template-columns: 1fr;
@@ -1073,7 +1356,7 @@
                         </div>
                         <div class="docs-point">
                             <strong>API authentication</strong>
-                            <span>Application-facing APIs use bearer JWT authentication. Configure the signing secret with <span class="mono">blobstore.api-security.jwt-secret</span> and issue tokens from your own integration layer or identity service.</span>
+                            <span>Application-facing APIs use JWT validation and can optionally enable Basic Auth for tightly controlled backend integrations. Configure this under Settings in the API Security section.</span>
                         </div>
                         <div class="docs-point">
                             <strong>Public vs private files</strong>
@@ -1081,7 +1364,7 @@
                         </div>
                         <div class="docs-point">
                             <strong>Recommended token scopes</strong>
-                            <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Add a dedicated read scope later if private-file readers should be narrower than general authenticated clients.</span>
+                            <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Basic Auth should be reserved for backend integrations over trusted transport only.</span>
                         </div>
                     </div>
                 </section>
@@ -1493,58 +1776,196 @@
 
         <section class="tab-panel" data-tab-panel="settings">
             <div class="panel-stack">
-                <section class="panel">
+                <section class="panel settings-panel">
                     <h2>Settings</h2>
                     <p class="hint">Manage storage settings and, when the database is ready, run cleanup actions for items that were already soft-deleted from the admin UI.</p>
                     <div th:if="${settingsSuccessMessage}" class="success" th:text="${settingsSuccessMessage}"></div>
+                    <div th:if="${apiSecuritySuccessMessage}" class="success" th:text="${apiSecuritySuccessMessage}"></div>
                     <section class="settings-block">
                         <div class="settings-header">
                             <h3>Storage Root</h3>
-                            <p class="hint" style="margin: 0;">Choose where Blob Store keeps module folders and generated assets on disk.</p>
+                            <p class="hint" style="margin: 0;">Set where files are stored on disk.</p>
                         </div>
-                        <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell" id="storageSettingsForm">
-                            <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
-                            <div class="row">
-                                <label style="grid-column: 1 / -1;">
-                                    Storage Root
-                                    <input type="text" th:field="*{rootDir}" placeholder="Storage Root">
-                                    <span class="error" th:if="${#fields.hasErrors('rootDir')}" th:errors="*{rootDir}"></span>
+                        <div class="settings-split">
+                            <form th:action="@{/admin/storage-settings}" method="post" th:object="${storageSettingsForm}" class="settings-form-shell" id="storageSettingsForm">
+                                <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                                <div class="row">
+                                    <label style="grid-column: 1 / -1;">
+                                        Storage Root
+                                        <input type="text" th:field="*{rootDir}" placeholder="Storage Root">
+                                        <span class="error" th:if="${#fields.hasErrors('rootDir')}" th:errors="*{rootDir}"></span>
+                                    </label>
+                                </div>
+                                <div class="settings-warning">
+                                    <strong>Changes apply after restart.</strong>
+                                    <p>Files are not moved automatically.</p>
+                                </div>
+                                <label class="checkbox">
+                                    <input type="checkbox" th:field="*{acknowledgeRisk}">
+                                    I understand files are not moved automatically
                                 </label>
-                            </div>
-                            <div class="settings-warning">
-                                <strong>Use caution before changing this path.</strong>
-                                <p>The new location is only applied after restart.</p>
-                                <p>Existing files are not moved automatically. If you point to a different empty folder after restart, existing uploads will not be available there until you migrate them.</p>
-                            </div>
-                            <div class="media-scope-card">
-                                <div class="media-scope-copy">
-                                    <span class="media-scope-eyebrow">Active path</span>
-                                    <strong class="mono" th:text="${storageSettingsStatus.activeRootDir}"></strong>
-                                    <span class="media-scope-description">Saved changes apply after restart so existing file operations keep using the current storage root until then.</span>
+                                <div class="actions">
+                                    <button type="submit">Save Storage Root</button>
                                 </div>
-                                <div class="media-scope-meta">
-                                    <span class="media-meta-pill" th:text="${storageSettingsStatus.restartRequired} ? 'Restart required' : 'Already active'"></span>
-                                    <span class="media-meta-pill mono" th:if="${storageSettingsStatus.savedRootDir != null}" th:text="'Saved: ' + ${storageSettingsStatus.savedRootDir}"></span>
-                                </div>
+                            </form>
+                            <aside class="settings-status-card">
+                                <h4>Path Status</h4>
+                                <dl class="settings-status-list">
+                                    <div class="settings-status-item">
+                                        <dt th:text="${storageSettingsStatus.restartRequired ? 'Active path' : 'Path'}"></dt>
+                                        <dd class="mono" th:text="${storageSettingsStatus.activeRootDir}"></dd>
+                                    </div>
+                                    <div class="settings-status-item" th:if="${storageSettingsStatus.restartRequired}">
+                                        <dt>Saved path</dt>
+                                        <dd class="mono" id="storageSavedPathValue" th:text="${storageSettingsStatus.savedRootDir}"></dd>
+                                    </div>
+                                    <div class="settings-status-item">
+                                        <dt>Activation</dt>
+                                        <dd id="storageActivationState" th:text="${storageSettingsStatus.restartRequired} ? 'Saved root will become active after restart.' : 'Saved root already matches the active path.'"></dd>
+                                    </div>
+                                </dl>
+                                <ul class="settings-checklist">
+                                    <li>Move existing files yourself before switching the root if you need old uploads to remain available.</li>
+                                    <li>Use an absolute path so operations stay predictable across environments.</li>
+                                    <li>Restart only after the destination directory is ready and writable by the application.</li>
+                                </ul>
+                            </aside>
+                        </div>
+                    </section>
+
+                    <section class="settings-block api-security-block">
+                        <div class="settings-header">
+                            <h3>API Security</h3>
+                            <p class="hint" style="margin: 0;">Set API auth. Use JWT by default and Basic Auth only for backend integrations.</p>
+                        </div>
+                        <form th:action="@{/admin/api-security}" method="post" th:object="${apiSecurityForm}" class="settings-form-shell" id="apiSecurityForm">
+                            <div class="error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                            <div class="api-security-layout">
+                                <section class="security-card">
+                                    <div class="security-card-header">
+                                        <h4>JWT Validation</h4>
+                                        <p>Recommended for apps and services.</p>
+                                    </div>
+                                    <p class="security-inline-list">Scopes: <span class="security-inline-pill mono">modules.read</span>, <span class="security-inline-pill mono">modules.write</span>, <span class="security-inline-pill mono">files.write</span></p>
+                                    <div class="security-row">
+                                        <label class="security-field-full">
+                                            JWT Validation Mode
+                                            <div class="security-mode-group" id="apiJwtValidationModeGroup">
+                                                <label class="security-mode-option" th:each="mode : ${apiJwtValidationModes}">
+                                                    <input type="radio" th:field="*{jwtValidationMode}" th:value="${mode}">
+                                                    <span th:text="${#strings.replace(mode.toString(), '_', ' ')}"></span>
+                                                </label>
+                                            </div>
+                                            <span class="error" th:if="${#fields.hasErrors('jwtValidationMode')}" th:errors="*{jwtValidationMode}"></span>
+                                        </label>
+                                    </div>
+                                    <div class="security-row">
+                                        <label>
+                                            Expected Audience
+                                            <input type="text" th:field="*{jwtAudience}" placeholder="blobstore-api">
+                                            <span class="hint">Optional.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('jwtAudience')}" th:errors="*{jwtAudience}"></span>
+                                        </label>
+                                        <label>
+                                            Expected Issuer
+                                            <input type="text" th:field="*{jwtIssuer}" placeholder="https://issuer.example.com">
+                                            <span class="hint">Optional.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('jwtIssuer')}" th:errors="*{jwtIssuer}"></span>
+                                        </label>
+                                    </div>
+                                    <div class="security-row">
+                                        <label class="conditional-group security-field-full" id="apiJwtSharedSecretField">
+                                            Shared JWT Secret
+                                            <input type="password" th:field="*{jwtSharedSecret}" placeholder="Shared JWT Secret" autocomplete="new-password">
+                                            <span class="hint">Used for HS256 tokens.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('jwtSharedSecret')}" th:errors="*{jwtSharedSecret}"></span>
+                                        </label>
+                                    </div>
+                                    <div class="security-row">
+                                        <label class="conditional-group security-field-full" id="apiJwtJwkSetUriField">
+                                            JWK Set URI
+                                            <input type="text" th:field="*{jwtJwkSetUri}" placeholder="https://issuer.example.com/.well-known/jwks.json">
+                                            <span class="hint">Used for JWK-based validation.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('jwtJwkSetUri')}" th:errors="*{jwtJwkSetUri}"></span>
+                                        </label>
+                                    </div>
+                                </section>
+                                <section class="security-card security-card-full">
+                                    <div class="security-card-header">
+                                        <h4>Basic Auth</h4>
+                                        <p>Use only for trusted backend integrations.</p>
+                                    </div>
+                                    <div class="security-toggle-card">
+                                        <label class="checkbox">
+                                            <input type="checkbox" th:field="*{basicAuthEnabled}" id="apiBasicAuthEnabled">
+                                            Enable Basic Auth
+                                        </label>
+                                    </div>
+                                    <div class="security-row conditional-group" id="apiBasicAuthFields">
+                                        <label>
+                                            Username
+                                            <input type="text" th:field="*{basicUsername}" placeholder="integration-client" autocomplete="off">
+                                            <span class="hint">Use a service account.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('basicUsername')}" th:errors="*{basicUsername}"></span>
+                                        </label>
+                                        <label>
+                                            Password
+                                            <input type="password" th:field="*{basicPassword}" placeholder="Integration Password" autocomplete="new-password">
+                                            <span class="hint">Applied after restart.</span>
+                                            <span class="error" th:if="${#fields.hasErrors('basicPassword')}" th:errors="*{basicPassword}"></span>
+                                        </label>
+                                    </div>
+                                </section>
+                                <section class="security-status-card">
+                                    <h4>Active Settings</h4>
+                                    <dl class="security-status-list compact-status-list">
+                                        <div class="security-status-item">
+                                            <dt>Active JWT mode</dt>
+                                            <dd th:text="${#strings.replace(apiSecurityStatus.activeJwtValidationMode.toString(), '_', ' ')}"></dd>
+                                        </div>
+                                        <div class="security-status-item">
+                                            <dt>Issuer</dt>
+                                            <dd class="mono" th:text="${apiSecurityStatus.activeJwtIssuer != null ? apiSecurityStatus.activeJwtIssuer : 'Any issuer'}"></dd>
+                                        </div>
+                                        <div class="security-status-item">
+                                            <dt>Audience</dt>
+                                            <dd class="mono" th:text="${apiSecurityStatus.activeJwtAudience != null ? apiSecurityStatus.activeJwtAudience : 'Any audience'}"></dd>
+                                        </div>
+                                        <div class="security-status-item">
+                                            <dt>Basic Auth</dt>
+                                            <dd th:text="${apiSecurityStatus.activeBasicAuthEnabled ? 'Enabled for ' + apiSecurityStatus.activeBasicUsername : 'Disabled'}"></dd>
+                                        </div>
+                                        <div class="security-status-item">
+                                            <dt>Saved JWT mode</dt>
+                                            <dd th:text="${apiSecurityStatus.savedJwtValidationMode != null ? #strings.replace(apiSecurityStatus.savedJwtValidationMode.toString(), '_', ' ') : #strings.replace(apiSecurityStatus.activeJwtValidationMode.toString(), '_', ' ')}"></dd>
+                                        </div>
+                                        <div class="security-status-item">
+                                            <dt>JWT scopes</dt>
+                                            <dd><span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, <span class="mono">blobstore.files.write</span></dd>
+                                        </div>
+                                    </dl>
+                                    <div class="security-pending-note" th:if="${apiSecurityStatus.restartRequired}">
+                                        A saved security configuration is waiting for restart before it becomes active.
+                                    </div>
+                                </section>
                             </div>
-                            <label class="checkbox">
-                                <input type="checkbox" th:field="*{acknowledgeRisk}">
-                                I understand this does not move existing files automatically and takes effect after restart
-                            </label>
                             <div class="actions">
-                                <button type="submit">Save Storage Root</button>
+                                <button type="submit">Save API Security</button>
                             </div>
                         </form>
                     </section>
-                    <div class="danger-zone" th:if="${databaseStatus.databaseReady}">
-                        <div>
-                            <strong>Permanently Delete Deleted Files</strong>
-                            <p class="hint" style="margin: 8px 0 0;">This removes file records and stored originals that belong to deleted modules. Files waiting for deletion: <span class="mono" th:text="${deletedFileCount}"></span>.</p>
+
+                    <section class="settings-block" th:classappend="${databaseStatus.databaseReady and deletedFileCount > 0} ? ' danger-zone' : ''">
+                        <div class="settings-header">
+                            <h3>Housekeeping</h3>
+                            <p class="hint" style="margin: 0;" th:text="${databaseStatus.databaseReady} ? 'Permanent cleanup removes deleted file records and stored originals that still belong to deleted modules.' : 'Connect the database before running permanent cleanup actions.'"></p>
                         </div>
-                        <form th:action="@{/admin/files/purge-deleted}" method="post" onsubmit="return window.confirm('Permanently delete files from deleted modules? This cannot be undone.');">
-                            <button type="submit" class="button-danger">Permanently Delete Deleted Files</button>
+                        <form th:if="${databaseStatus.databaseReady}" th:action="@{/admin/files/purge-deleted}" method="post" onsubmit="return window.confirm('Permanently delete files from deleted modules? This cannot be undone.');">
+                            <div class="actions">
+                                <button type="submit" class="button-danger">Permanently Delete Deleted Files</button>
+                            </div>
                         </form>
-                    </div>
+                    </section>
                 </section>
             </div>
         </section>
@@ -1638,6 +2059,14 @@
     const projectDialogCloseButtons = document.querySelectorAll("[data-close-project-dialog]");
     const storageSettingsForm = document.getElementById("storageSettingsForm");
     const storageRootInput = document.getElementById("rootDir");
+    const storageSavedPathValue = document.getElementById("storageSavedPathValue");
+    const storageActivationState = document.getElementById("storageActivationState");
+    const apiSecurityForm = document.getElementById("apiSecurityForm");
+    const apiJwtValidationModes = document.querySelectorAll("input[name='jwtValidationMode']");
+    const apiJwtSharedSecretField = document.getElementById("apiJwtSharedSecretField");
+    const apiJwtJwkSetUriField = document.getElementById("apiJwtJwkSetUriField");
+    const apiBasicAuthEnabled = document.getElementById("apiBasicAuthEnabled");
+    const apiBasicAuthFields = document.getElementById("apiBasicAuthFields");
     const vendorPorts = {
         POSTGRESQL: 5432,
         MYSQL: 3306,
@@ -1761,8 +2190,25 @@
         button.addEventListener("click", closeProjectDialog);
     });
 
+    const activeStorageRoot = /*[[${storageSettingsStatus.activeRootDir}]]*/ "";
+
+    function syncStorageSettingsPreview() {
+        if (!storageRootInput || !storageActivationState) {
+            return;
+        }
+        const nextRoot = storageRootInput.value.trim() || activeStorageRoot;
+        const changingRoot = nextRoot !== activeStorageRoot;
+        if (storageSavedPathValue) {
+            storageSavedPathValue.textContent = nextRoot;
+        }
+        storageActivationState.textContent = changingRoot
+                ? "This saved path will become active after restart."
+                : "Saved root already matches the active path.";
+    }
+
     if (storageSettingsForm && storageRootInput) {
-        const activeStorageRoot = /*[[${storageSettingsStatus.activeRootDir}]]*/ "";
+        storageRootInput.addEventListener("input", syncStorageSettingsPreview);
+        syncStorageSettingsPreview();
         storageSettingsForm.addEventListener("submit", event => {
             const nextRoot = storageRootInput.value.trim();
             if (nextRoot && nextRoot !== activeStorageRoot) {
@@ -1772,6 +2218,37 @@
                 }
             }
         });
+    }
+
+    function syncApiSecurityFields() {
+        if (apiJwtValidationModes.length > 0 && apiJwtSharedSecretField && apiJwtJwkSetUriField) {
+            const selectedMode = [...apiJwtValidationModes].find(option => option.checked);
+            const mode = selectedMode ? selectedMode.value : "";
+            apiJwtSharedSecretField.hidden = mode !== "SHARED_SECRET";
+            apiJwtJwkSetUriField.hidden = mode !== "JWK_SET_URI";
+            apiJwtSharedSecretField.querySelectorAll("input, select, textarea").forEach(field => {
+                field.disabled = apiJwtSharedSecretField.hidden;
+            });
+            apiJwtJwkSetUriField.querySelectorAll("input, select, textarea").forEach(field => {
+                field.disabled = apiJwtJwkSetUriField.hidden;
+            });
+        }
+        if (apiBasicAuthEnabled && apiBasicAuthFields) {
+            apiBasicAuthFields.hidden = !apiBasicAuthEnabled.checked;
+            apiBasicAuthFields.querySelectorAll("input, select, textarea").forEach(field => {
+                if (field !== apiBasicAuthEnabled) {
+                    field.disabled = apiBasicAuthFields.hidden;
+                }
+            });
+        }
+    }
+
+    apiJwtValidationModes.forEach(option => option.addEventListener("change", syncApiSecurityFields));
+    if (apiBasicAuthEnabled) {
+        apiBasicAuthEnabled.addEventListener("change", syncApiSecurityFields);
+    }
+    if (apiSecurityForm) {
+        syncApiSecurityFields();
     }
 
     function setActiveTab(tabName) {

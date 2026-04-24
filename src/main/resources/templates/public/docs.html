@@ -192,7 +192,7 @@
                 </div>
                 <div class="docs-point">
                     <strong>API authentication</strong>
-                    <span>Application-facing APIs use bearer JWT authentication. Configure the signing secret with <span class="mono">blobstore.api-security.jwt-secret</span> and issue tokens from your own integration layer or identity service.</span>
+                    <span>Application-facing APIs use JWT validation and can optionally enable Basic Auth for tightly controlled backend integrations. Configure this from the admin dashboard under API Security.</span>
                 </div>
                 <div class="docs-point">
                     <strong>Public vs private files</strong>
@@ -200,7 +200,7 @@
                 </div>
                 <div class="docs-point">
                     <strong>Recommended token scopes</strong>
-                    <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Add a dedicated read scope later if private-file readers should be narrower than general authenticated clients.</span>
+                    <span>Use <span class="mono">blobstore.modules.read</span>, <span class="mono">blobstore.modules.write</span>, and <span class="mono">blobstore.files.write</span> for the secured routes. Basic Auth should be reserved for backend integrations over trusted transport only.</span>
                 </div>
             </div>
         </section>
@@ -233,7 +233,7 @@
                 </tbody>
             </table>
             <div class="api-note">
-                Retrieval can stay anonymous only when a module is marked public. Uploads always require a bearer token with the appropriate scope, and private file reads require authenticated access.
+                Retrieval can stay anonymous only when a module is marked public. Uploads require configured API credentials, and private file reads require authenticated access through JWT or an allowed backend integration client.
             </div>
         </section>
     </section>

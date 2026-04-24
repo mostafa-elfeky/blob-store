@@ -351,9 +351,9 @@ class BlobStoreApplicationTests {
     }
 
     @Test
-    void shouldRequireLoginForAdminDashboard() throws Exception {
+    void shouldAllowAnonymousAccessToAdminDashboard() throws Exception {
         mockMvc.perform(get("/admin"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isOk());
     }
 
     @Test

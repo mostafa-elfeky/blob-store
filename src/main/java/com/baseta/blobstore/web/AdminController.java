@@ -12,6 +12,9 @@ import com.baseta.blobstore.module.ModuleService;
 import com.baseta.blobstore.module.ModuleType;
 import com.baseta.blobstore.project.ProjectForm;
 import com.baseta.blobstore.project.ProjectService;
+import com.baseta.blobstore.security.ApiSecurityForm;
+import com.baseta.blobstore.security.ApiSecuritySettingsService;
+import com.baseta.blobstore.security.ApiJwtValidationMode;
 import com.baseta.blobstore.module.VideoType;
 import com.baseta.blobstore.storage.StorageSettingsForm;
 import com.baseta.blobstore.storage.StorageSettingsService;
@@ -39,6 +42,7 @@ public class AdminController {
     private final InMemoryLogStore logStore;
     private final StorageSettingsService storageSettingsService;
     private final ProjectService projectService;
+    private final ApiSecuritySettingsService apiSecuritySettingsService;
 
     @GetMapping({"/", "/admin"})
     public String dashboard(
@@ -208,11 +212,42 @@ public class AdminController {
         return "redirect:/admin#settings";
     }
 
+    @PostMapping("/admin/api-security")
+    public String saveApiSecurity(
+            @Valid @ModelAttribute("apiSecurityForm") ApiSecurityForm apiSecurityForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            return renderSettingsErrorState(model);
+        }
+
+        try {
+            ApiSecuritySettingsService.SaveResult result = apiSecuritySettingsService.save(apiSecurityForm);
+            redirectAttributes.addFlashAttribute(
+                    "apiSecuritySuccessMessage",
+                    result == ApiSecuritySettingsService.SaveResult.UNCHANGED
+                            ? "API security settings are unchanged."
+                            : "API security settings saved. Restart the application to apply the new configuration."
+            );
+        } catch (IllegalArgumentException exception) {
+            bindingResult.reject("api.security.form", exception.getMessage());
+            return renderSettingsErrorState(model);
+        }
+
+        redirectAttributes.addFlashAttribute("apiSecurityForm", apiSecurityForm);
+        redirectAttributes.addFlashAttribute("activeTab", "settings");
+        return "redirect:/admin#settings";
+    }
+
     private void populateDashboardModel(Model model) {
         var databaseStatus = databaseConnectionService.currentStatus();
         model.addAttribute("databaseStatus", databaseStatus);
         model.addAttribute("storageSettingsStatus", storageSettingsService.currentStatus());
+        model.addAttribute("apiSecurityStatus", apiSecuritySettingsService.currentStatus());
         model.addAttribute("databaseVendors", Arrays.stream(DatabaseVendor.values()).filter(vendor -> vendor != DatabaseVendor.H2).toList());
+        model.addAttribute("apiJwtValidationModes", ApiJwtValidationMode.values());
         model.addAttribute("moduleTypes", ModuleType.values());
         model.addAttribute("videoTypes", VideoType.values());
         model.addAttribute("mediaTypeOptions", ModuleMediaTypeSupport.presetMediaTypes());
@@ -265,6 +300,9 @@ public class AdminController {
         }
         if (!model.containsAttribute("projectForm")) {
             model.addAttribute("projectForm", new ProjectForm());
+        }
+        if (!model.containsAttribute("apiSecurityForm")) {
+            model.addAttribute("apiSecurityForm", apiSecuritySettingsService.currentForm());
         }
         if (!model.containsAttribute("databaseFormOpen")) {
             model.addAttribute("databaseFormOpen", false);
