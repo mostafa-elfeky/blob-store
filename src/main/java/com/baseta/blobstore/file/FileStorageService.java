@@ -43,11 +43,24 @@ public class FileStorageService {
 
     @Transactional
     public StoredFileView store(String moduleCode, MultipartFile multipartFile) {
-        ModuleEntity module = moduleService.getByCode(moduleCode);
-        validateFile(module, multipartFile);
+        return store(moduleCode, new MultipartFileUploadSource(multipartFile));
+    }
 
-        String originalName = StringUtils.hasText(multipartFile.getOriginalFilename())
-                ? Path.of(multipartFile.getOriginalFilename()).getFileName().toString()
+    @Transactional
+    public StoredFileView store(String moduleCode, String fileUrl) {
+        try (UrlFileUploadSource uploadSource = UrlFileUploadSource.download(fileUrl)) {
+            return store(moduleCode, uploadSource);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to clean up URL upload data", exception);
+        }
+    }
+
+    private StoredFileView store(String moduleCode, FileUploadSource uploadSource) {
+        ModuleEntity module = moduleService.getByCode(moduleCode);
+        validateFile(module, uploadSource);
+
+        String originalName = StringUtils.hasText(uploadSource.getOriginalName())
+                ? Path.of(uploadSource.getOriginalName()).getFileName().toString()
                 : "file";
         String extension = extractExtension(originalName);
         String storedName = UUID.randomUUID() + extension;
@@ -55,17 +68,17 @@ public class FileStorageService {
         Path targetPath = resolveOriginalFilePath(module, storedName);
         ensureParentDirectory(targetPath);
 
-        try (InputStream inputStream = multipartFile.getInputStream()) {
+        try (InputStream inputStream = uploadSource.openStream()) {
             Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to store file", exception);
         }
 
         if (module.getType() == ModuleType.IMAGE) {
-            generateImageVariants(module, targetPath, retrievalName, resolveContentType(multipartFile));
+            generateImageVariants(module, targetPath, retrievalName, resolveContentType(uploadSource));
         }
 
-        StoredFileEntity entity = buildStoredFile(module, originalName, storedName, retrievalName, multipartFile);
+        StoredFileEntity entity = buildStoredFile(module, originalName, storedName, retrievalName, uploadSource);
         StoredFileView storedFileView = StoredFileView.fromEntity(storedFileRepository.save(entity));
         log.info("Stored file '{}' in module '{}'", originalName, module.getCode());
         return storedFileView;
@@ -144,15 +157,15 @@ public class FileStorageService {
         });
     }
 
-    private void validateFile(ModuleEntity module, MultipartFile multipartFile) {
-        if (multipartFile.isEmpty()) {
+    private void validateFile(ModuleEntity module, FileUploadSource uploadSource) {
+        if (uploadSource.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
-        if (module.getMaxFileSizeMb() != null && multipartFile.getSize() > module.getMaxFileSizeMb() * 1024L * 1024L) {
+        if (module.getMaxFileSizeMb() != null && uploadSource.getSize() > module.getMaxFileSizeMb() * 1024L * 1024L) {
             throw new IllegalArgumentException("Uploaded file exceeds module size limit");
         }
 
-        String contentType = resolveContentType(multipartFile).toLowerCase(Locale.ROOT);
+        String contentType = resolveContentType(uploadSource).toLowerCase(Locale.ROOT);
         if (!module.getSupportedMediaTypes().isEmpty()) {
             if (!ModuleMediaTypeSupport.matches(contentType, module.getSupportedMediaTypes())) {
                 throw new IllegalArgumentException("Uploaded file media type is not allowed");
@@ -165,10 +178,10 @@ public class FileStorageService {
                 throw new IllegalArgumentException("Module accepts videos only");
             }
         }
-        validateOriginalImageSize(module, multipartFile);
+        validateOriginalImageSize(module, uploadSource);
     }
 
-    private void validateOriginalImageSize(ModuleEntity module, MultipartFile multipartFile) {
+    private void validateOriginalImageSize(ModuleEntity module, FileUploadSource uploadSource) {
         if (module.getType() != ModuleType.IMAGE
                 || module.getOriginalImageWidth() == null
                 || module.getOriginalImageHeight() == null) {
@@ -176,7 +189,7 @@ public class FileStorageService {
         }
 
         BufferedImage image;
-        try (InputStream inputStream = multipartFile.getInputStream()) {
+        try (InputStream inputStream = uploadSource.openStream()) {
             image = ImageIO.read(inputStream);
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to read uploaded image", exception);
@@ -194,9 +207,9 @@ public class FileStorageService {
         }
     }
 
-    private String resolveContentType(MultipartFile multipartFile) {
-        return StringUtils.hasText(multipartFile.getContentType())
-                ? multipartFile.getContentType()
+    private String resolveContentType(FileUploadSource uploadSource) {
+        return StringUtils.hasText(uploadSource.getContentType())
+                ? uploadSource.getContentType()
                 : "application/octet-stream";
     }
 
@@ -210,7 +223,7 @@ public class FileStorageService {
             String originalName,
             String storedName,
             String retrievalName,
-            MultipartFile multipartFile
+            FileUploadSource uploadSource
     ) {
         StoredFileEntity entity = new StoredFileEntity();
         entity.setFileKey(UUID.randomUUID());
@@ -218,8 +231,8 @@ public class FileStorageService {
         entity.setOriginalName(originalName);
         entity.setStoredName(storedName);
         entity.setRetrievalName(retrievalName);
-        entity.setContentType(resolveContentType(multipartFile));
-        entity.setFileSize(multipartFile.getSize());
+        entity.setContentType(resolveContentType(uploadSource));
+        entity.setFileSize(uploadSource.getSize());
         return entity;
     }
 

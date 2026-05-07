@@ -36,6 +36,14 @@ Tests use H2 in-memory database configuration and write temporary files under `b
 
 API details are available from the admin UI. The platform exposes module and file endpoints for uploads, retrieval, and metadata access.
 
+Upload contract:
+
+- `POST /api/files/{moduleCode}`
+- Send exactly one of `file` or `fileUrl`
+- `file` uses `multipart/form-data`
+- `fileUrl` accepts remote `http` or `https` assets, including names such as `https://m.media-amazon.com/images/I/61p+FdEl5UL._AC_UL320_.jpg`
+- Remote URL uploads still pass through the same module media-type, size, and image-dimension validation rules as direct uploads
+
 ## Project Structure
 
 - [src/main/java/com/baseta/blobstore/module](/Users/mostafa/IdeaProjects/blob-store/src/main/java/com/baseta/blobstore/module:1): module configuration and validation

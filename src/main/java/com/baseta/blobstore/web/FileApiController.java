@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 @RestController
 @RequestMapping("/api/files")
@@ -38,13 +39,22 @@ public class FileApiController {
 
     private final FileStorageService fileStorageService;
 
-    @PostMapping(path = "/{moduleCode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/{moduleCode}")
     @PreAuthorize("hasAuthority('SCOPE_blobstore.files.write')")
     public StoredFileView upload(
             @PathVariable String moduleCode,
-            @RequestParam("file") MultipartFile file
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @RequestParam(name = "fileUrl", required = false) String fileUrl
     ) {
-        return fileStorageService.store(moduleCode, file);
+        boolean hasFile = file != null;
+        boolean hasFileUrl = StringUtils.hasText(fileUrl);
+        if (hasFile == hasFileUrl) {
+            throw new IllegalArgumentException("Provide exactly one of file or fileUrl");
+        }
+        if (hasFile) {
+            return fileStorageService.store(moduleCode, file);
+        }
+        return fileStorageService.store(moduleCode, fileUrl);
     }
 
     @GetMapping("/{fileKey}")

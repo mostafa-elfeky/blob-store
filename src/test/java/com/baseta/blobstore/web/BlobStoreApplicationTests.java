@@ -14,9 +14,11 @@ import com.baseta.blobstore.project.ProjectEntity;
 import com.baseta.blobstore.project.ProjectForm;
 import com.baseta.blobstore.project.ProjectService;
 import com.baseta.blobstore.storage.StorageSettingsService;
+import com.sun.net.httpserver.HttpServer;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.TestPropertySource;
@@ -37,6 +40,7 @@ import org.springframework.test.context.TestPropertySource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -123,6 +127,52 @@ class BlobStoreApplicationTests {
         assertThat(Files.exists(moduleRoot.resolve("original").resolve(storedFile.getRetrievalName()))).isTrue();
         assertThat(Files.exists(moduleRoot.resolve("thumb").resolve(storedFile.getRetrievalName()))).isTrue();
         assertThat(Files.exists(moduleRoot.resolve("medium").resolve(storedFile.getRetrievalName()))).isTrue();
+    }
+
+    @Test
+    void shouldUploadFileFromUrl() throws Exception {
+        Files.createDirectories(Path.of("build/test-storage"));
+
+        ModuleForm form = new ModuleForm();
+        form.setCode("remote-product-images");
+        form.setDisplayName("Remote Product Images");
+        form.setProjectId(createProject("remote-commerce-assets", "Remote Commerce Assets").getId());
+        form.setType(ModuleType.IMAGE);
+        form.setImageSizeDefinitions("thumb=80x80");
+        form.setMaxFileSizeMb(5);
+
+        ModuleEntity module = moduleService.create(form);
+        Path moduleRoot = moduleRoot(module);
+        byte[] imageBytes = createImageBytes();
+
+        HttpServer server = createFileServer("/images/I/61p+FdEl5UL._AC_UL320_.jpg", "image/jpeg", imageBytes);
+        try {
+            String fileUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/images/I/61p+FdEl5UL._AC_UL320_.jpg";
+
+            mockMvc.perform(post("/api/files/{moduleCode}", module.getCode())
+                            .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_blobstore.files.write")))
+                            .param("fileUrl", fileUrl))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.moduleCode").value(module.getCode()))
+                    .andExpect(jsonPath("$.originalName").value("61p+FdEl5UL._AC_UL320_.jpg"))
+                    .andExpect(jsonPath("$.retrievalName").value(org.hamcrest.Matchers.endsWith(".jpg")))
+                    .andExpect(jsonPath("$.contentType").value("image/jpeg"));
+        } finally {
+            server.stop(0);
+        }
+
+        assertThat(Files.isDirectory(moduleRoot.resolve("original"))).isTrue();
+        assertThat(Files.isDirectory(moduleRoot.resolve("thumb"))).isTrue();
+    }
+
+    @Test
+    void shouldRejectUploadWhenBothFileAndFileUrlAreProvided() throws Exception {
+        mockMvc.perform(multipart("/api/files/{moduleCode}", "documents")
+                        .file(new MockMultipartFile("file", "contract.pdf", "application/pdf", "pdf-content".getBytes()))
+                        .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_blobstore.files.write")))
+                        .param("fileUrl", "https://example.com/contract.pdf"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Provide exactly one of file or fileUrl"));
     }
 
     @Test
@@ -541,6 +591,18 @@ class BlobStoreApplicationTests {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(image, "jpeg", outputStream);
         return outputStream.toByteArray();
+    }
+
+    private HttpServer createFileServer(String path, String contentType, byte[] body) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext(path, exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", contentType);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.start();
+        return server;
     }
 
     private void deleteDirectory(Path directory) throws IOException {

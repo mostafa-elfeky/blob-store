@@ -212,7 +212,10 @@
                 <tbody>
                 <tr>
                     <th>Upload</th>
-                    <td class="mono">POST /api/files/{moduleCode}</td>
+                    <td>
+                        <div class="mono">POST /api/files/{moduleCode}</div>
+                        <div class="mono">Use field "file" for direct upload or "fileUrl" for remote fetch, for example https://m.media-amazon.com/images/I/61p+FdEl5UL._AC_UL320_.jpg</div>
+                    </td>
                 </tr>
                 <tr>
                     <th>Retrieve</th>
@@ -228,7 +231,7 @@
                 </tr>
                 <tr>
                     <th>Payload</th>
-                    <td class="mono">multipart/form-data with field name "file"; image modules can also enforce an exact original size configured as WIDTHxHEIGHT</td>
+                    <td class="mono">Send exactly one of "file" or "fileUrl". Use multipart/form-data for binary uploads or a multipart/form-data / form-urlencoded "fileUrl" field for remote fetches. Image modules can also enforce an exact original size configured as WIDTHxHEIGHT.</td>
                 </tr>
                 </tbody>
             </table>

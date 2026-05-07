@@ -7,6 +7,7 @@
 - Create upload modules with a normalized unique code
 - Support image and video module types
 - Validate file type and file size per module
+- Accept direct binary uploads or remote `fileUrl` uploads
 - Generate resized image variants such as `thumb` or `medium`
 - Download files by UUID or retrieval name
 - Browse modules, recent uploads, and API details from the admin dashboard
@@ -93,6 +94,27 @@ If the tag is pushed from the default branch, it will also publish:
 ## Admin Experience
 
 The admin UI is the main entry point for configuring the platform, managing modules, reviewing uploads, checking system logs, and viewing the available API details.
+
+## Upload API
+
+`POST /api/files/{moduleCode}` accepts exactly one of these fields:
+
+- `file`: multipart binary upload
+- `fileUrl`: remote HTTP/HTTPS URL, for example `https://m.media-amazon.com/images/I/61p+FdEl5UL._AC_UL320_.jpg`
+
+Examples:
+
+```bash
+curl -X POST "http://localhost:4817/api/files/product-images" \
+  -H "Authorization: Bearer TOKEN" \
+  -F "file=@/path/to/file.jpg"
+```
+
+```bash
+curl -X POST "http://localhost:4817/api/files/product-images" \
+  -H "Authorization: Bearer TOKEN" \
+  -F "fileUrl=https://m.media-amazon.com/images/I/61p+FdEl5UL._AC_UL320_.jpg"
+```
 
 Name suggestion for `Blob Store` came from Ahmed Lotfy.
 
